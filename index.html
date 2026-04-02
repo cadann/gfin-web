@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GFin — Contas a Receber</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -26,6 +27,31 @@
   --r:8px;--r-lg:12px;
 }
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+.login-wrap{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;background:var(--bg);
+}
+.login-card{
+  background:var(--surface);border:1px solid var(--border-md);
+  border-radius:var(--r-lg);padding:40px 40px 36px;width:360px;text-align:center;
+}
+.login-logo{font-size:22px;font-weight:600;letter-spacing:.02em;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text-dim);margin-bottom:28px}
+.login-card input{
+  width:100%;font-family:var(--sans);font-size:13px;padding:9px 12px;
+  border:1px solid var(--border-strong);border-radius:var(--r);
+  background:var(--bg);color:var(--text);margin-bottom:10px;
+}
+.login-card input:focus{outline:none;border-color:var(--accent)}
+.login-btn{
+  width:100%;font-family:var(--sans);font-size:13px;font-weight:500;
+  padding:9px;border-radius:var(--r);border:none;
+  background:var(--text);color:var(--surface);cursor:pointer;transition:background .1s;
+}
+.login-btn:hover{background:#333}
+.login-err{font-size:12px;color:var(--red);margin-top:10px;min-height:18px}
 
 /* HEADER */
 .hdr{
@@ -143,6 +169,21 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
 </head>
 <body>
 
+<!-- LOGIN VIEW -->
+<div id="v-login" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">GFin</div>
+    <div class="login-sub">Contas a Receber — Careli Assessoria</div>
+    <input type="email" id="login-email" placeholder="E-mail" autocomplete="username">
+    <input type="password" id="login-pass" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP (oculto até login) -->
+<div id="v-app" style="display:none">
+
 <!-- HEADER -->
 <div class="hdr">
   <div style="display:flex;align-items:center">
@@ -154,6 +195,7 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
     <button class="btn" onclick="doExport()" id="btn-exp" style="display:none">Exportar CSV</button>
     <button class="btn" onclick="resetApp()" id="btn-rst" style="display:none">Nova importação</button>
     <button class="btn" onclick="openModal()" id="btn-key">⚙ API Key</button>
+    <button class="btn" onclick="doLogout()">Sair</button>
   </div>
 </div>
 
@@ -504,6 +546,40 @@ function saveKey(){
   closeModal();
   refreshNotice();
 }
+
+// ── AUTH ──────────────────────────────────────────────
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-err');
+  err.textContent = '';
+
+  if(!email || !pass){ err.textContent = 'Preencha e-mail e senha.'; return; }
+
+  netlifyIdentity.login(email, pass)
+    .catch(e => { err.textContent = 'E-mail ou senha incorretos.'; });
+}
+
+function doLogout(){
+  netlifyIdentity.logout();
+}
+
+function showApp(){ 
+  document.getElementById('v-login').style.display = 'none';
+  document.getElementById('v-app').style.display = '';
+}
+
+function showLogin(){
+  document.getElementById('v-login').style.display = '';
+  document.getElementById('v-app').style.display = 'none';
+}
+
+netlifyIdentity.on('login', () => { netlifyIdentity.close(); showApp(); });
+netlifyIdentity.on('logout', () => showLogin());
+netlifyIdentity.on('init', user => { user ? showApp() : showLogin(); });
+netlifyIdentity.init();
 </script>
+
+</div><!-- /v-app -->
 </body>
 </html>
