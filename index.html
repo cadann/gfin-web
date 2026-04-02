@@ -135,11 +135,7 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   <div class="login-card">
     <div class="login-logo">GFin</div>
     <div class="login-sub">Contas a Receber — Careli Assessoria</div>
-    <input type="email" id="login-email" placeholder="E-mail" autocomplete="username">
-    <input type="password" id="login-pass" placeholder="Senha" autocomplete="current-password"
-      onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Entrar</button>
-    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" onclick="netlifyIdentity.open('login')">Entrar</button>
   </div>
 </div>
 
@@ -449,14 +445,6 @@ function hideErr(){
 }
 
 // ── AUTH ──────────────────────────────────────────────
-function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
-  const err=document.getElementById('login-err');
-  err.textContent='';
-  if(!email||!pass){err.textContent='Preencha e-mail e senha.';return;}
-  netlifyIdentity.login(email,pass).catch(()=>{err.textContent='E-mail ou senha incorretos.';});
-}
 function doLogout(){netlifyIdentity.logout();}
 function showApp(){
   document.getElementById('v-login').style.display='none';
