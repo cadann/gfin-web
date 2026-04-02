@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GFin — Contas a Receber</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f2f1ed;
+  --surface:#ffffff;
+  --surface2:#fafaf8;
+  --border:rgba(0,0,0,0.1);
+  --border-md:rgba(0,0,0,0.18);
+  --border-strong:rgba(0,0,0,0.28);
+  --text:#111111;
+  --text-dim:#555;
+  --text-faint:#999;
+  --accent:#1a56db;
+  --green:#0d7a4e;
+  --amber:#92400e;
+  --red:#b91c1c;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --r:8px;--r-lg:12px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* HEADER */
+.hdr{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:11px 20px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;
+}
+.hdr-title{font-size:13px;font-weight:600;letter-spacing:.02em}
+.hdr-period{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:10px}
+.hdr-right{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{
+  font-family:var(--sans);font-size:12px;padding:5px 13px;
+  border-radius:var(--r);border:1px solid var(--border-strong);
+  background:transparent;color:var(--text);cursor:pointer;transition:background .1s;
+  white-space:nowrap;
+}
+.btn:hover{background:rgba(0,0,0,0.04)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--text);color:var(--surface);border-color:var(--text)}
+.btn-primary:hover{background:#333}
+
+/* UPLOAD */
+.upload-wrap{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:calc(100vh - 46px);padding:40px 20px;
+}
+.upload-box{
+  background:var(--surface);border:2px dashed var(--border-strong);
+  border-radius:var(--r-lg);padding:56px 72px;text-align:center;
+  cursor:pointer;transition:all .15s;max-width:460px;width:100%;
+}
+.upload-box:hover,.upload-box.drag{border-color:var(--accent);background:rgba(26,86,219,0.025)}
+.upload-icon{width:48px;height:48px;margin:0 auto 18px;opacity:.25}
+.upload-title{font-size:16px;font-weight:500;margin-bottom:6px}
+.upload-sub{font-size:12px;color:var(--text-dim);margin-bottom:22px}
+.upload-hint{font-size:11px;color:var(--text-faint);margin-top:14px}
+
+/* NOTICE */
+.notice{
+  background:#fffbf2;border:1px solid rgba(146,64,14,.2);
+  border-radius:var(--r);padding:10px 14px;font-size:12px;
+  color:var(--amber);margin-top:14px;max-width:460px;width:100%;text-align:left;
+}
+
+/* LOADING */
+.loading-wrap{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:calc(100vh - 46px);gap:14px;text-align:center;
+}
+.spin{
+  width:28px;height:28px;border:2px solid var(--border-strong);
+  border-top-color:var(--text);border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 20px}
+.s-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px}
+.s-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:500;margin-bottom:3px}
+.s-value{font-family:var(--mono);font-size:16px;font-weight:500}
+
+/* TABLE */
+.tbl-wrap{padding:0 20px 40px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;font-size:12px}
+thead th{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-dim);padding:9px 11px;text-align:left;
+  background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:7px 11px;border-bottom:1px solid rgba(0,0,0,0.045);font-family:var(--mono);color:var(--text);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(0,0,0,0.012)}
+.tr-paid td{color:var(--text-faint)}
+.td-nome{font-family:var(--sans);font-size:12px;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.td-r{text-align:right}
+.td-c{text-align:center}
+.td-cnpj{font-size:11px;color:var(--text-dim)}
+
+/* PGTO INPUT */
+.pgto-in{
+  width:42px;background:transparent;border:1px solid transparent;
+  border-radius:4px;font-family:var(--mono);font-size:12px;
+  color:var(--text);text-align:center;padding:2px 3px;transition:border-color .1s;
+}
+.pgto-in:hover{border-color:var(--border-md)}
+.pgto-in:focus{outline:none;border-color:var(--accent);background:rgba(26,86,219,.04)}
+.pgto-in.ok{color:var(--green);font-weight:500}
+
+/* SALDO */
+.sl-open{color:var(--amber)}
+.sl-paid{color:var(--green)}
+
+/* MODAL OVERLAY — note: using fixed only with a min-height trick for iframe context */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal{
+  background:var(--surface);border-radius:var(--r-lg);
+  border:1px solid var(--border-md);padding:22px 24px;width:410px;
+}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--text-dim);margin-bottom:14px}
+.modal input[type=password],.modal input[type=text]{
+  width:100%;font-family:var(--mono);font-size:12px;padding:7px 10px;
+  border:1px solid var(--border-strong);border-radius:var(--r);
+  background:var(--bg);color:var(--text);margin-bottom:12px;
+}
+.modal input:focus{outline:none;border-color:var(--accent)}
+.modal-row{display:flex;justify-content:flex-end;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div style="display:flex;align-items:center">
+    <span class="hdr-title">GFin</span>
+    <span style="font-size:12px;color:var(--text-dim);margin-left:6px">Contas a Receber</span>
+    <span class="hdr-period" id="hdr-period"></span>
+  </div>
+  <div class="hdr-right">
+    <button class="btn" onclick="doExport()" id="btn-exp" style="display:none">Exportar CSV</button>
+    <button class="btn" onclick="resetApp()" id="btn-rst" style="display:none">Nova importação</button>
+    <button class="btn" onclick="openModal()" id="btn-key">⚙ API Key</button>
+  </div>
+</div>
+
+<!-- UPLOAD VIEW -->
+<div id="v-upload" class="upload-wrap">
+  <div class="upload-box" id="drop"
+    onclick="document.getElementById('finput').click()"
+    ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+    </svg>
+    <div class="upload-title">Relação de Contas a Receber</div>
+    <div class="upload-sub">Faça o upload do PDF gerado pelo sistema</div>
+    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('finput').click()">
+      Selecionar PDF
+    </button>
+    <input type="file" id="finput" accept=".pdf" style="display:none" onchange="handleFile(this.files[0])">
+    <div class="upload-hint">ou arraste e solte aqui</div>
+  </div>
+  <div id="api-notice" class="notice" style="display:none">
+    ⚠ Chave de API não configurada.
+    <button class="btn" style="margin-top:8px;width:100%" onclick="openModal()">Configurar chave API →</button>
+  </div>
+</div>
+
+<!-- LOADING VIEW -->
+<div id="v-load" class="loading-wrap" style="display:none">
+  <div class="spin"></div>
+  <p style="font-size:14px;color:var(--text-dim)">Extraindo dados com IA...</p>
+  <p style="font-size:12px;color:var(--text-faint)">Aguarde alguns segundos</p>
+</div>
+
+<!-- DATA VIEW -->
+<div id="v-data" style="display:none">
+
+  <div class="summary">
+    <div class="s-card">
+      <div class="s-label">Total faturado</div>
+      <div class="s-value" id="s-tot">—</div>
+    </div>
+    <div class="s-card">
+      <div class="s-label" style="color:var(--green)">Recebido</div>
+      <div class="s-value" style="color:var(--green)" id="s-rec">—</div>
+    </div>
+    <div class="s-card">
+      <div class="s-label" style="color:var(--amber)">Em aberto</div>
+      <div class="s-value" style="color:var(--amber)" id="s-abr">—</div>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Recebidos / Clientes</div>
+      <div class="s-value" id="s-cnt">—</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:48px">Cód.</th>
+          <th style="min-width:180px">Nome</th>
+          <th style="width:148px">CNPJ / CPF</th>
+          <th style="width:62px">Boleto</th>
+          <th style="width:90px;text-align:right">Valor</th>
+          <th style="width:36px;text-align:center">Dis</th>
+          <th style="width:88px">Vencimento</th>
+          <th style="width:54px;text-align:center">Pgto</th>
+          <th style="width:90px;text-align:right">Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- API KEY MODAL -->
+<div id="modal" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">Chave de API Anthropic</div>
+    <div class="modal-sub">Usada para extração dos dados do PDF. Salva localmente no seu navegador.</div>
+    <input type="password" id="key-in" placeholder="sk-ant-api03-...">
+    <div class="modal-row">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveKey()">Salvar chave</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://api.anthropic.com/v1/messages';
+let records = [];
+let apiKey = localStorage.getItem('cr_key') || '';
+
+// ── INIT ──────────────────────────────────────────────
+(function(){
+  const saved = localStorage.getItem('cr_data');
+  if(saved){
+    try{
+      records = JSON.parse(saved);
+      show('data');
+      renderTable();
+      updateSummary();
+      const p = localStorage.getItem('cr_period');
+      if(p) setHeader(p);
+    }catch(e){ localStorage.removeItem('cr_data'); }
+  }
+  refreshNotice();
+})();
+
+function show(v){
+  ['upload','load','data'].forEach(n => {
+    document.getElementById('v-'+n).style.display = n===v ? '' : 'none';
+  });
+  document.getElementById('btn-rst').style.display = v==='data' ? '' : 'none';
+  document.getElementById('btn-exp').style.display = v==='data' ? '' : 'none';
+  refreshNotice();
+}
+
+function refreshNotice(){
+  const up = document.getElementById('v-upload');
+  const n = document.getElementById('api-notice');
+  n.style.display = (!apiKey && up.style.display!=='none') ? '' : 'none';
+}
+
+function setHeader(label){
+  document.getElementById('hdr-period').textContent = label;
+}
+
+// ── DRAG & DROP ───────────────────────────────────────
+function onDragOver(e){
+  e.preventDefault();
+  document.getElementById('drop').classList.add('drag');
+}
+function onDragLeave(){
+  document.getElementById('drop').classList.remove('drag');
+}
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('drop').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f && f.type==='application/pdf') handleFile(f);
+}
+
+// ── FILE HANDLING ─────────────────────────────────────
+async function handleFile(file){
+  if(!file || file.type!=='application/pdf'){
+    alert('Selecione um arquivo PDF válido.');
+    return;
+  }
+  if(!apiKey){
+    alert('Configure a chave de API Anthropic primeiro.');
+    openModal(); return;
+  }
+  show('load');
+  try{
+    const b64 = await toB64(file);
+    const data = await extractPDF(b64);
+    records = data;
+    localStorage.setItem('cr_data', JSON.stringify(records));
+    detectPeriod(data);
+    show('data');
+    renderTable();
+    updateSummary();
+  }catch(err){
+    console.error(err);
+    alert('Erro: ' + err.message);
+    show('upload');
+  }
+}
+
+function toB64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result.split(',')[1]);
+    r.onerror = ()=> rej(new Error('Falha ao ler arquivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function extractPDF(b64){
+  const prompt = `Analise este PDF "Relação de Contas a Receber" e extraia TODOS os registros de clientes.
+
+Para cada registro, retorne um objeto JSON com exatamente estes campos:
+- cod: código do cliente como inteiro (ex: 906)
+- nome: nome completo do cliente
+- cnpj: CNPJ ou CPF com formatação original (ex: "50.219.317/0001-91")
+- boleto: número do boleto como string (ex: "20983")
+- valor: valor da coluna "Em Aberto" como número decimal (ex: 393.00)
+- dis: dia do mês do vencimento como inteiro (ex: 6 para 06/04/2026)
+- vencimento: data completa no formato DD/MM/YYYY
+
+Retorne SOMENTE um array JSON válido, sem markdown, sem texto adicional, sem explicações.`;
+
+  const res = await fetch(API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      messages:[{
+        role:'user',
+        content:[
+          {type:'document', source:{type:'base64',media_type:'application/pdf',data:b64}},
+          {type:'text', text:prompt}
+        ]
+      }]
+    })
+  });
+
+  if(!res.ok){
+    let msg = `HTTP ${res.status}`;
+    try{ const e=await res.json(); msg=e.error?.message||msg; }catch(_){}
+    throw new Error(msg);
+  }
+
+  const out = await res.json();
+  let txt = out.content.map(c=>c.text||'').join('');
+  txt = txt.replace(/```json|```/g,'').trim();
+  
+  const parsed = JSON.parse(txt);
+  return parsed.map(r=>({...r, pgto:'', saldo:r.valor}));
+}
+
+function detectPeriod(data){
+  if(!data.length) return;
+  const v = data.find(r=>r.vencimento)?.vencimento;
+  if(!v) return;
+  const [,m,y] = v.split('/');
+  const mns=['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+             'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const label = `${mns[parseInt(m,10)]}/${y}`;
+  setHeader(label);
+  localStorage.setItem('cr_period', label);
+}
+
+// ── TABLE ─────────────────────────────────────────────
+function renderTable(){
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  records.forEach((r,i)=>{
+    const paid = r.pgto !== '';
+    const tr = document.createElement('tr');
+    tr.className = paid ? 'tr-paid' : '';
+    tr.innerHTML = `
+      <td>${r.cod}</td>
+      <td class="td-nome">${r.nome}</td>
+      <td class="td-cnpj">${r.cnpj}</td>
+      <td>${r.boleto}</td>
+      <td class="td-r">${brl(r.valor)}</td>
+      <td class="td-c">${r.dis}</td>
+      <td>${r.vencimento}</td>
+      <td class="td-c">
+        <input class="pgto-in${paid?' ok':''}"
+          type="text" value="${r.pgto}" placeholder="—"
+          maxlength="2" data-i="${i}" oninput="onPgto(this)">
+      </td>
+      <td class="td-r ${paid?'sl-paid':'sl-open'}" id="sl-${i}">${brl(r.saldo)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function onPgto(input){
+  const i = +input.dataset.i;
+  const v = input.value.trim();
+  records[i].pgto = v;
+  records[i].saldo = v ? 0 : records[i].valor;
+
+  const row = input.closest('tr');
+  const sl = document.getElementById('sl-'+i);
+
+  if(v){
+    row.className='tr-paid';
+    input.classList.add('ok');
+    sl.className='td-r sl-paid';
+  } else {
+    row.className='';
+    input.classList.remove('ok');
+    sl.className='td-r sl-open';
+  }
+  sl.textContent = brl(records[i].saldo);
+  updateSummary();
+  localStorage.setItem('cr_data', JSON.stringify(records));
+}
+
+function updateSummary(){
+  const tot  = records.reduce((s,r)=>s+r.valor, 0);
+  const rec  = records.reduce((s,r)=>s+(r.pgto?r.valor:0), 0);
+  const cnt  = records.filter(r=>r.pgto).length;
+  document.getElementById('s-tot').textContent  = brl(tot);
+  document.getElementById('s-rec').textContent  = brl(rec);
+  document.getElementById('s-abr').textContent  = brl(tot-rec);
+  document.getElementById('s-cnt').textContent  = `${cnt} / ${records.length}`;
+}
+
+function brl(n){
+  return 'R$ ' + Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ── RESET ─────────────────────────────────────────────
+function resetApp(){
+  if(!confirm('Limpar dados atuais e importar novo PDF?')) return;
+  records = [];
+  localStorage.removeItem('cr_data');
+  localStorage.removeItem('cr_period');
+  document.getElementById('hdr-period').textContent = '';
+  document.getElementById('finput').value = '';
+  show('upload');
+}
+
+// ── EXPORT CSV ────────────────────────────────────────
+function doExport(){
+  const h = ['Cód.','Nome','CNPJ/CPF','Boleto','Valor','Dis','Vencimento','Pgto','Saldo'];
+  const rows = records.map(r=>[
+    r.cod, `"${r.nome}"`, r.cnpj, r.boleto,
+    r.valor.toFixed(2).replace('.',','),
+    r.dis, r.vencimento, r.pgto,
+    r.saldo.toFixed(2).replace('.',',')
+  ]);
+  const csv = [h.join(';'), ...rows.map(r=>r.join(';'))].join('\r\n');
+  const b = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'contas_receber.csv';
+  a.click();
+}
+
+// ── API KEY MODAL ─────────────────────────────────────
+function openModal(){
+  document.getElementById('key-in').value = apiKey;
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(){
+  document.getElementById('modal').style.display = 'none';
+}
+function saveKey(){
+  const v = document.getElementById('key-in').value.trim();
+  if(!v){ alert('Digite a chave.'); return; }
+  apiKey = v;
+  localStorage.setItem('cr_key', apiKey);
+  closeModal();
+  refreshNotice();
+}
+</script>
+</body>
+</html>
