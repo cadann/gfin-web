@@ -449,6 +449,7 @@ function doLogout(){netlifyIdentity.logout();}
 function showApp(){
   document.getElementById('v-login').style.display='none';
   document.getElementById('v-app').style.display='';
+  sessionStorage.setItem('gfin_active','1');
 }
 function showLogin(){
   document.getElementById('v-login').style.display='';
@@ -458,7 +459,12 @@ netlifyIdentity.on('login',()=>{netlifyIdentity.close();showApp();});
 netlifyIdentity.on('logout',()=>showLogin());
 netlifyIdentity.on('init',user=>{
   if(user){
-    showApp();
+    // só mantém sessão se a aba ainda estava aberta (sessionStorage limpa ao fechar browser)
+    if(sessionStorage.getItem('gfin_active')){
+      showApp();
+    } else {
+      netlifyIdentity.logout();
+    }
   } else {
     showLogin();
     const hash = window.location.hash || '';
