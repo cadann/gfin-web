@@ -456,15 +456,18 @@ function showLogin(){
 }
 netlifyIdentity.on('login',()=>{netlifyIdentity.close();showApp();});
 netlifyIdentity.on('logout',()=>showLogin());
-netlifyIdentity.on('init',user=>{user?showApp():showLogin();});
+netlifyIdentity.on('init',user=>{
+  if(user){
+    showApp();
+  } else {
+    showLogin();
+    const hash = window.location.hash || '';
+    if(hash.includes('invite_token') || hash.includes('recovery_token') || hash.includes('confirmation_token')){
+      netlifyIdentity.open();
+    }
+  }
+});
 netlifyIdentity.init();
-
-// abre o widget automaticamente se vier link de convite ou recuperação de senha
-if(window.location.hash && window.location.hash.includes('invite_token')){
-  netlifyIdentity.open('signup');
-} else if(window.location.hash && window.location.hash.includes('recovery_token')){
-  netlifyIdentity.open('recovery');
-}
 </script>
 </body>
 </html>
