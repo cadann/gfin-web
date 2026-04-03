@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GFin — Contas a Receber</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -135,7 +136,11 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   <div class="login-card">
     <div class="login-logo">GFin</div>
     <div class="login-sub">Contas a Receber — Careli Assessoria</div>
-    <button class="login-btn" onclick="netlifyIdentity.open('login')">Entrar</button>
+    <input type="email" id="login-email" placeholder="E-mail" autocomplete="username">
+    <input type="password" id="login-pass" placeholder="Senha" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
   </div>
 </div>
 
@@ -444,36 +449,54 @@ function hideErr(){
   document.getElementById('err-notice').style.display='none';
 }
 
-// ── AUTH ──────────────────────────────────────────────
-function doLogout(){netlifyIdentity.logout();}
+// ── FIREBASE AUTH ─────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCqjRbFboQsJC45ojiaZ2-txOPORia1nKM",
+  authDomain: "gfin-6de83.firebaseapp.com",
+  projectId: "gfin-6de83",
+  storageBucket: "gfin-6de83.firebasestorage.app",
+  messagingSenderId: "487078389350",
+  appId: "1:487078389350:web:e56eda34c90422eab8afa7"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  err.textContent = '';
+  if(!email||!pass){ err.textContent='Preencha e-mail e senha.'; return; }
+  btn.textContent = 'Entrando...';
+  btn.disabled = true;
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(e => {
+      err.textContent = 'E-mail ou senha incorretos.';
+      btn.textContent = 'Entrar';
+      btn.disabled = false;
+    });
+}
+
+function doLogout(){
+  auth.signOut();
+}
+
 function showApp(){
   document.getElementById('v-login').style.display='none';
   document.getElementById('v-app').style.display='';
-  sessionStorage.setItem('gfin_active','1');
 }
 function showLogin(){
   document.getElementById('v-login').style.display='';
   document.getElementById('v-app').style.display='none';
+  const btn = document.getElementById('login-btn');
+  if(btn){ btn.textContent='Entrar'; btn.disabled=false; }
 }
-netlifyIdentity.on('login',()=>{netlifyIdentity.close();showApp();});
-netlifyIdentity.on('logout',()=>showLogin());
-netlifyIdentity.on('init',user=>{
-  if(user){
-    // só mantém sessão se a aba ainda estava aberta (sessionStorage limpa ao fechar browser)
-    if(sessionStorage.getItem('gfin_active')){
-      showApp();
-    } else {
-      netlifyIdentity.logout();
-    }
-  } else {
-    showLogin();
-    const hash = window.location.hash || '';
-    if(hash.includes('invite_token') || hash.includes('recovery_token') || hash.includes('confirmation_token')){
-      netlifyIdentity.open();
-    }
-  }
+
+auth.onAuthStateChanged(user => {
+  if(user) showApp(); else showLogin();
 });
-netlifyIdentity.init();
 </script>
 </body>
 </html>
