@@ -171,6 +171,12 @@ body.dark .pgto-in{border:1px solid #334155;background:#0f172a;color:#ffffff}
 .pgto-in.ok{color:var(--green);font-weight:600}
 .saldo-open{color:var(--amber);font-family:var(--mono);font-size:12px}
 .saldo-paid{color:var(--green);font-family:var(--mono);font-size:12px}
+.cls-btn{flex:1;padding:7px;border-radius:var(--r);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all .1s;border:1px solid}
+body.light .cls-btn{border-color:#e2e8f0;background:#f8fafc;color:#475569}
+body.dark .cls-btn{border-color:#334155;background:#0f172a;color:#94a3b8}
+.cls-btn.cls-esc{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;font-weight:600}
+.cls-btn.cls-adr{background:#f0fdf4;border-color:#22c55e;color:#15803d;font-weight:600}
+.cls-btn.cls-alv{background:#fdf4ff;border-color:#a855f7;color:#7e22ce;font-weight:600}
 
 /* ── MODAL ── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center}
@@ -480,9 +486,17 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
 </div>
 
 <div id="modal-subgrupo" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-subgrupo')">
-  <div class="modal" style="width:360px">
+  <div class="modal" style="width:380px">
     <div class="modal-title">Subgrupo de Despesa</div>
     <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="msg-nome"></div>
+    <div class="form-row">
+      <label class="form-label">Classificação</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="cls-btn" id="cls-esc" onclick="selClass('Escritório')">Escritório</button>
+        <button class="cls-btn" id="cls-adr" onclick="selClass('Adriano')">Adriano</button>
+        <button class="cls-btn" id="cls-alv" onclick="selClass('Álvaro')">Álvaro</button>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-subgrupo')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveSubgrupo()">Salvar</button>
@@ -978,11 +992,13 @@ async function loadSubgrupos(){
     const snap=await db.collection('subgrupos_despesa').where('grupoId','==',selGrupoId).orderBy('nome').get();
     if(snap.empty){el.innerHTML='<div class="empty">Nenhum subgrupo</div>';return;}
     el.innerHTML='';
+    const clsBadge={Escritório:'cls-esc',Adriano:'cls-adr','Álvaro':'cls-alv'};
     snap.forEach(doc=>{
       const d=doc.data(),id=doc.id;
+      const badge=d.classificacao?`<span class="cls-btn ${clsBadge[d.classificacao]||''}" style="flex:none;padding:2px 8px;font-size:10px;pointer-events:none">${d.classificacao}</span>`:'';
       const div=document.createElement('div');
       div.className='tree-item'+(selSubgrupoId===id?' selected':'');
-      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span><button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button>`;
+      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span>${badge}<button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button>`;
       el.appendChild(div);
     });
   }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
@@ -1029,11 +1045,29 @@ async function delGrupo(id,e){
   document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
 }
 
-function openSubgrupoModal(){if(!selGrupoId){alert('Selecione um grupo.');return;}document.getElementById('msg-nome').value='';openModal('modal-subgrupo');}
+let selectedClass = '';
+
+function selClass(cls){
+  selectedClass = cls;
+  document.getElementById('cls-esc').className='cls-btn'+(cls==='Escritório'?' cls-esc':'');
+  document.getElementById('cls-adr').className='cls-btn'+(cls==='Adriano'?' cls-adr':'');
+  document.getElementById('cls-alv').className='cls-btn'+(cls==='Álvaro'?' cls-alv':'');
+}
+
+function openSubgrupoModal(){
+  if(!selGrupoId){alert('Selecione um grupo.');return;}
+  document.getElementById('msg-nome').value='';
+  selectedClass='';
+  ['cls-esc','cls-adr','cls-alv'].forEach(id=>document.getElementById(id).className='cls-btn');
+  openModal('modal-subgrupo');
+}
+
 async function saveSubgrupo(){
   const nome=document.getElementById('msg-nome').value.trim();
   if(!nome){alert('Digite o nome.');return;}
-  await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId});closeModal('modal-subgrupo');loadSubgrupos();
+  if(!selectedClass){alert('Selecione a classificação.');return;}
+  await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId,classificacao:selectedClass});
+  closeModal('modal-subgrupo');loadSubgrupos();
 }
 async function delSubgrupo(id,e){
   e.stopPropagation();if(!confirm('Excluir subgrupo?'))return;
@@ -1049,7 +1083,10 @@ function openDespModal(){
 async function saveDespesa(){
   const{mes,ano}=getMesAno('desp-mes','desp-ano');
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
-  const data={descricao:document.getElementById('md-desc').value.trim(),valor:parseFloat(document.getElementById('md-valor').value)||0,data:document.getElementById('md-data').value,status:document.getElementById('md-status').value,subgrupoId:selSubgrupoId,mesAno:ma};
+  // busca classificação do subgrupo
+  const subSnap=await db.collection('subgrupos_despesa').doc(selSubgrupoId).get();
+  const classificacao=subSnap.exists?subSnap.data().classificacao||'':'';
+  const data={descricao:document.getElementById('md-desc').value.trim(),valor:parseFloat(document.getElementById('md-valor').value)||0,data:document.getElementById('md-data').value,status:document.getElementById('md-status').value,subgrupoId:selSubgrupoId,mesAno:ma,classificacao};
   if(!data.descricao){alert('Descrição obrigatória.');return;}
   await db.collection('despesas').add(data);closeModal('modal-despesa');loadDespLanc();
 }
