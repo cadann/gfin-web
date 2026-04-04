@@ -188,7 +188,11 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   <div id="page-clientes" class="page">
     <div class="tbl-header">
       <span class="tbl-title">Clientes</span>
-      <button class="btn btn-primary" onclick="openClienteModal()">+ Novo cliente</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="document.getElementById('cli-file').click()">Importar XLS</button>
+        <input type="file" id="cli-file" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleClienteFile(this.files[0])">
+        <button class="btn btn-primary" onclick="openClienteModal()">+ Novo cliente</button>
+      </div>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -621,6 +625,33 @@ async function saveCliente(){
   if(editId)await db.collection('clientes').doc(editId).update(data);
   else await db.collection('clientes').add(data);
   closeModal('modal-cliente');loadClientes();
+}
+
+function handleClienteFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xls','xlsx','csv'].includes(ext)){alert('Use XLS, XLSX ou CSV.');return;}
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+      const clientes=parseXLS(rows);
+      if(!clientes.length){alert('Nenhum registro encontrado.');return;}
+      let novos=0;
+      for(const r of clientes){
+        if(!r.cod)continue;
+        const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
+        if(snap.empty){await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:'',email:''});novos++;}
+      }
+      alert(`Importação concluída. ${novos} novos clientes adicionados.`);
+      document.getElementById('cli-file').value='';
+      loadClientes();
+    }catch(err){alert('Erro: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // ── CONTAS A RECEBER ──────────────────────────────────
