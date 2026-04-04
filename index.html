@@ -12,130 +12,248 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#f2f1ed;--surface:#fff;--surface2:#fafaf8;
-  --border:rgba(0,0,0,0.08);--border-md:rgba(0,0,0,0.15);--border-strong:rgba(0,0,0,0.25);
-  --text:#111;--text-dim:#555;--text-faint:#999;
-  --accent:#1a56db;--green:#0d7a4e;--amber:#92400e;--red:#b91c1c;
-  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
-  --r:8px;--r-lg:12px;
+  --sans:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --blue:#1d4ed8;--blue-dark:#1e3a8a;--blue-hover:#1e40af;
+  --green:#0d7a4e;--amber:#d97706;--red:#b91c1c;
+  --r:8px;--r-lg:10px;
 }
-body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+body{font-family:var(--sans);font-size:14px;transition:background .2s,color .2s}
+
+/* ── THEMES ── */
+body.light{background:#f0f4f8;color:#1e293b}
+body.dark{background:#0f172a;color:#e2e8f0}
+
+/* ── AUTH ── */
 .auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.auth-card{background:var(--surface);border:1px solid var(--border-md);border-radius:var(--r-lg);padding:40px;width:380px;text-align:center}
-.auth-logo{font-size:24px;font-weight:600;margin-bottom:4px}
-.auth-sub{font-size:12px;color:var(--text-dim);margin-bottom:28px}
-.auth-card input{width:100%;font-family:var(--sans);font-size:13px;padding:10px 12px;border:1px solid var(--border-strong);border-radius:var(--r);background:var(--bg);color:var(--text);margin-bottom:10px}
-.auth-card input:focus{outline:none;border-color:var(--accent)}
-.auth-btn{width:100%;font-family:var(--sans);font-size:13px;font-weight:500;padding:10px;border-radius:var(--r);border:none;background:var(--text);color:var(--surface);cursor:pointer}
-.auth-btn:hover{background:#333}
+body.light .auth-wrap{background:#f0f4f8}
+body.dark .auth-wrap{background:#0f172a}
+.auth-card{border-radius:var(--r-lg);padding:40px;width:380px;text-align:center;border:1px solid}
+body.light .auth-card{background:#fff;border-color:#e2e8f0}
+body.dark .auth-card{background:#1e293b;border-color:#334155}
+.auth-logo{font-size:26px;font-weight:700;color:var(--blue);margin-bottom:4px}
+.auth-sub{font-size:12px;margin-bottom:28px}
+body.light .auth-sub{color:#64748b}
+body.dark .auth-sub{color:#94a3b8}
+.auth-input{width:100%;font-family:var(--sans);font-size:13px;padding:10px 12px;border-radius:var(--r);margin-bottom:10px;transition:border-color .1s,background .2s}
+body.light .auth-input{border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b}
+body.dark .auth-input{border:1px solid #334155;background:#0f172a;color:#e2e8f0}
+.auth-input:focus{outline:none;border-color:var(--blue)}
+.auth-btn{width:100%;font-family:var(--sans);font-size:13px;font-weight:600;padding:11px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;cursor:pointer}
+.auth-btn:hover{background:var(--blue-hover)}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-err{font-size:12px;color:var(--red);margin-top:10px;min-height:18px}
-.auth-hint{font-size:12px;color:var(--text-dim);margin-top:14px}
-.auth-link{color:var(--accent);cursor:pointer;text-decoration:underline}
+.auth-hint{font-size:12px;margin-top:14px}
+body.light .auth-hint{color:#64748b}
+body.dark .auth-hint{color:#94a3b8}
+.auth-link{color:var(--blue);cursor:pointer;text-decoration:underline}
 .sms-digits{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
-.sms-digits input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:600;font-family:var(--mono);border:1px solid var(--border-strong);border-radius:var(--r);background:var(--bg);color:var(--text);margin-bottom:0}
-.sms-digits input:focus{outline:none;border-color:var(--accent)}
-.app-wrap{display:flex;flex-direction:column;min-height:100vh}
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:48px;position:sticky;top:0;z-index:20}
-.nav-brand{font-size:14px;font-weight:600;margin-right:28px}
-.nav-menu{display:flex;gap:2px;align-items:center;flex:1}
-.nav-item{font-size:13px;padding:5px 12px;border-radius:var(--r);cursor:pointer;color:var(--text-dim);border:none;background:none;font-family:var(--sans)}
-.nav-item:hover{background:rgba(0,0,0,0.04);color:var(--text)}
-.nav-item.active{background:rgba(26,86,219,0.08);color:var(--accent);font-weight:500}
-.nav-right{display:flex;gap:8px;align-items:center}
-.nav-user{font-size:12px;color:var(--text-dim)}
-.page{display:none;padding:24px}
-.page.active{display:block}
-.btn{font-family:var(--sans);font-size:12px;padding:6px 14px;border-radius:var(--r);border:1px solid var(--border-strong);background:transparent;color:var(--text);cursor:pointer;white-space:nowrap}
-.btn:hover{background:rgba(0,0,0,0.04)}
+.sms-digit{width:46px;height:54px;text-align:center;font-size:24px;font-weight:600;font-family:var(--mono);border-radius:var(--r);transition:border-color .1s,background .2s}
+body.light .sms-digit{border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b}
+body.dark .sms-digit{border:1px solid #334155;background:#0f172a;color:#e2e8f0}
+.sms-digit:focus{outline:none;border-color:var(--blue)}
+
+/* ── APP LAYOUT ── */
+.app{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;flex-shrink:0;display:flex;flex-direction:column;transition:background .2s}
+body.light .sidebar{background:var(--blue)}
+body.dark .sidebar{background:var(--blue-dark)}
+.sb-brand{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.15)}
+.sb-logo{color:#fff;font-size:18px;font-weight:700;letter-spacing:.03em}
+.sb-company{color:rgba(255,255,255,0.55);font-size:10px;margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+.sb-nav{padding:14px 0;flex:1}
+.sb-section-label{color:rgba(255,255,255,0.4);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:0 20px;margin-bottom:6px;margin-top:10px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:rgba(255,255,255,0.65);font-size:13px;border-left:3px solid transparent;border:none;background:none;width:100%;text-align:left;font-family:var(--sans)}
+.sb-item.active{background:rgba(255,255,255,0.15);color:#fff;border-left:3px solid #fff;font-weight:500}
+.sb-item:hover{background:rgba(255,255,255,0.1);color:#fff}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);flex-shrink:0}
+.sb-dot.active{background:#fff}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.15)}
+.sb-user-name{color:rgba(255,255,255,0.8);font-size:12px;font-weight:500;margin-bottom:4px}
+.sb-user-email{color:rgba(255,255,255,0.45);font-size:10px;margin-bottom:12px;word-break:break-all}
+.sb-exit{color:rgba(255,255,255,0.65);font-size:12px;padding:6px 12px;border:1px solid rgba(255,255,255,0.25);border-radius:var(--r);background:none;width:100%;cursor:pointer;font-family:var(--sans)}
+.sb-exit:hover{background:rgba(255,255,255,0.1);color:#fff}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid;flex-shrink:0;transition:background .2s,border-color .2s}
+body.light .topbar{background:#fff;border-color:#e2e8f0}
+body.dark .topbar{background:#1e293b;border-color:#334155}
+.topbar-title{font-size:15px;font-weight:600}
+body.light .topbar-title{color:#1e293b}
+body.dark .topbar-title{color:#f1f5f9}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.theme-toggle{display:flex;align-items:center;gap:7px}
+.theme-label{font-size:11px}
+body.light .theme-label{color:#64748b}
+body.dark .theme-label{color:#64748b}
+.toggle-track{width:34px;height:18px;border-radius:99px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+body.light .toggle-track{background:var(--blue)}
+body.dark .toggle-track{background:#334155}
+.toggle-knob{position:absolute;top:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
+body.light .toggle-knob{left:3px}
+body.dark .toggle-knob{left:19px}
+
+/* ── CONTENT ── */
+.page-content{padding:24px;flex:1;overflow-y:auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:18px;font-weight:600}
+body.light .page-title{color:#1e293b}
+body.dark .page-title{color:#f1f5f9}
+
+/* ── FORM CONTROLS ── */
+.sel{font-family:var(--sans);font-size:12px;padding:5px 10px;border-radius:var(--r);cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+body.light .sel{border:1px solid #e2e8f0;background:#f8fafc;color:#475569}
+body.dark .sel{border:1px solid #334155;background:#0f172a;color:#94a3b8}
+
+/* ── BUTTONS ── */
+.btn{font-family:var(--sans);font-size:12px;padding:6px 14px;border-radius:var(--r);cursor:pointer;white-space:nowrap;transition:background .1s,border-color .1s}
 .btn:active{transform:scale(.98)}
-.btn-primary{background:var(--text);color:var(--surface);border-color:var(--text)}
-.btn-primary:hover{background:#333}
-.btn-danger{color:var(--red);border-color:rgba(185,28,28,.3)}
-.btn-danger:hover{background:rgba(185,28,28,.05)}
-.btn-sm{padding:3px 10px;font-size:11px}
-.cards-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
-.card-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:500;margin-bottom:4px}
-.card-value{font-family:var(--mono);font-size:18px;font-weight:500}
-.tbl-wrap{overflow-x:auto}
-.tbl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.tbl-title{font-size:15px;font-weight:500}
-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;font-size:12px}
-thead th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);padding:9px 12px;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.04);color:var(--text);white-space:nowrap}
+body.light .btn{border:1px solid #e2e8f0;background:#f8fafc;color:#475569}
+body.dark .btn{border:1px solid #334155;background:#1e293b;color:#94a3b8}
+body.light .btn:hover{background:#f1f5f9}
+body.dark .btn:hover{background:#263548}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue-hover)}
+body.light .btn-primary,.btn-primary{border-color:var(--blue)}
+.btn-danger{color:var(--red)}
+body.light .btn-danger{border-color:rgba(185,28,28,.3)}
+body.dark .btn-danger{border-color:rgba(185,28,28,.3)}
+.btn-sm{padding:4px 10px;font-size:11px}
+
+/* ── CARDS ── */
+.cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kcard{border-radius:var(--r-lg);padding:16px 18px;border:1px solid;position:relative;overflow:hidden;transition:background .2s,border-color .2s}
+body.light .kcard{background:#fff;border-color:#e2e8f0}
+body.dark .kcard{background:#1e293b;border-color:#334155}
+.kcard-bar{position:absolute;top:0;left:0;right:0;height:4px}
+.kcard-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:8px;margin-top:2px}
+.kcard-value{font-size:22px;font-weight:700;font-family:var(--mono);line-height:1}
+.kcard-sub{font-size:10px;color:#94a3b8;margin-top:6px}
+
+/* ── TABLE ── */
+.tbl-section{border-radius:var(--r-lg);border:1px solid;overflow:hidden;transition:background .2s,border-color .2s}
+body.light .tbl-section{background:#fff;border-color:#e2e8f0}
+body.dark .tbl-section{background:#1e293b;border-color:#334155}
+.tbl-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid}
+body.light .tbl-bar{border-color:#f1f5f9}
+body.dark .tbl-bar{border-color:#334155}
+.tbl-bar-title{font-size:13px;font-weight:600}
+body.light .tbl-bar-title{color:#1e293b}
+body.dark .tbl-bar-title{color:#f1f5f9}
+.btn-row{display:flex;gap:6px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:9px 14px;text-align:left;border-bottom:1px solid}
+body.light thead th{color:#94a3b8;background:#f8fafc;border-color:#f1f5f9}
+body.dark thead th{color:#64748b;background:#0f172a;border-color:#1e293b}
+tbody td{padding:9px 14px;border-bottom:1px solid;transition:color .2s,border-color .2s}
+body.light tbody td{color:#334155;border-color:#f8fafc}
+body.dark tbody td{color:#cbd5e1;border-color:#1e293b}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:rgba(0,0,0,0.012)}
+body.light tbody tr:hover td{background:#fafafa}
+body.dark tbody tr:hover td{background:#263548}
 .td-mono{font-family:var(--mono);font-size:12px}
+.td-dim{font-size:11px;color:#94a3b8}
 .td-r{text-align:right}
 .td-c{text-align:center}
-.td-faint{color:var(--text-dim);font-size:11px}
-.tr-paid td{color:var(--text-faint)}
-.pgto-in{width:42px;background:transparent;border:1px solid transparent;border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--text);text-align:center;padding:2px 4px}
-.pgto-in:hover{border-color:var(--border-md)}
-.pgto-in:focus{outline:none;border-color:var(--accent);background:rgba(26,86,219,.04)}
-.pgto-in.ok{color:var(--green);font-weight:500}
-.sl-open{color:var(--amber);font-family:var(--mono);font-size:12px}
-.sl-paid{color:var(--green);font-family:var(--mono);font-size:12px}
-.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
-.badge-green{background:rgba(13,122,78,.1);color:var(--green)}
-.badge-amber{background:rgba(146,64,14,.1);color:var(--amber)}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center}
-.modal{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border-md);padding:24px;width:480px;max-width:95vw}
+.tr-paid td{opacity:.6}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:99px}
+.b-paid{background:#dcfce7;color:#166534}
+.b-open{background:#fef9c3;color:#854d0e}
+.pgto-in{width:36px;text-align:center;font-family:var(--mono);font-size:12px;padding:2px 4px;border-radius:4px;transition:border-color .1s,background .2s}
+body.light .pgto-in{border:1px solid #e2e8f0;background:#f8fafc;color:#334155}
+body.dark .pgto-in{border:1px solid #334155;background:#0f172a;color:#cbd5e1}
+.pgto-in:focus{outline:none;border-color:var(--blue)}
+.pgto-in.ok{color:var(--green);font-weight:600}
+.saldo-open{color:var(--amber);font-family:var(--mono);font-size:12px}
+.saldo-paid{color:var(--green);font-family:var(--mono);font-size:12px}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{border-radius:var(--r-lg);border:1px solid;padding:24px;width:480px;max-width:95vw;transition:background .2s,border-color .2s}
+body.light .modal{background:#fff;border-color:#e2e8f0}
+body.dark .modal{background:#1e293b;border-color:#334155}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:16px}
 .form-row{margin-bottom:12px}
-.form-label{font-size:11px;font-weight:500;color:var(--text-dim);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.05em}
-.form-input{width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:var(--r);background:var(--bg);color:var(--text)}
-.form-input:focus{outline:none;border-color:var(--accent)}
-.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:4px;display:block}
+.form-input{width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border-radius:var(--r);transition:border-color .1s,background .2s}
+body.light .form-input{border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b}
+body.dark .form-input{border:1px solid #334155;background:#0f172a;color:#e2e8f0}
+.form-input:focus{outline:none;border-color:var(--blue)}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
-.upload-box{background:var(--surface);border:2px dashed var(--border-strong);border-radius:var(--r-lg);padding:40px;text-align:center;cursor:pointer;max-width:420px;margin:0 auto}
-.upload-box:hover,.upload-box.drag{border-color:var(--accent);background:rgba(26,86,219,0.025)}
-.fmt-badges{display:flex;gap:6px;justify-content:center;margin-top:12px}
-.fmt-badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,0.06);color:var(--text-dim)}
-.tree-wrap{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-top:16px}
-.tree-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
-.tree-panel-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
-.tree-panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim)}
-.tree-item{padding:8px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:space-between}
-.tree-item:hover{background:rgba(0,0,0,0.02)}
-.tree-item.selected{background:rgba(26,86,219,0.07);color:var(--accent);font-weight:500}
-.tree-item-actions{display:flex;gap:4px;opacity:0}
-.tree-item:hover .tree-item-actions{opacity:1}
-.spin{width:20px;height:20px;border:2px solid var(--border-strong);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+
+/* ── TREE ── */
+.tree-layout{display:grid;grid-template-columns:260px 1fr;gap:16px;margin-top:4px}
+.tree-panel{border-radius:var(--r-lg);border:1px solid;overflow:hidden;transition:background .2s,border-color .2s}
+body.light .tree-panel{background:#fff;border-color:#e2e8f0}
+body.dark .tree-panel{background:#1e293b;border-color:#334155}
+.tree-panel-hdr{padding:10px 14px;border-bottom:1px solid;display:flex;align-items:center;justify-content:space-between}
+body.light .tree-panel-hdr{background:#f8fafc;border-color:#f1f5f9}
+body.dark .tree-panel-hdr{background:#0f172a;border-color:#1e293b}
+.tree-panel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8}
+.tree-item{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid}
+body.light .tree-item{border-color:#f8fafc;color:#334155}
+body.dark .tree-item{border-color:#1e293b;color:#cbd5e1}
+body.light .tree-item:hover{background:#fafafa}
+body.dark .tree-item:hover{background:#263548}
+.tree-item.selected{color:var(--blue);font-weight:500}
+body.light .tree-item.selected{background:#eff6ff}
+body.dark .tree-item.selected{background:#1e3a8a22}
+.tree-item:last-child{border-bottom:none}
+.tree-item-del{opacity:0;font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid rgba(185,28,28,.3);color:var(--red);background:none;cursor:pointer}
+.tree-item:hover .tree-item-del{opacity:1}
+
+/* ── MISC ── */
+.notice{border-radius:var(--r);padding:10px 14px;font-size:12px;margin-bottom:14px}
+body.light .notice{background:#fffbf2;border:1px solid rgba(217,119,6,.25);color:#92400e}
+body.dark .notice{background:#1c1608;border:1px solid rgba(217,119,6,.25);color:#d97706}
+.empty{text-align:center;padding:40px;font-size:13px;color:#94a3b8}
+.spin{width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:#94a3b8;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-row{text-align:center;padding:32px;color:var(--text-dim);font-size:13px}
-.notice{background:#fffbf2;border:1px solid rgba(146,64,14,.2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:16px}
-.empty{text-align:center;padding:40px;color:var(--text-faint);font-size:13px}
-.period-filter{display:flex;gap:8px;align-items:center}
-.period-filter select,.period-select{font-family:var(--sans);font-size:12px;padding:5px 10px;border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface);color:var(--text);cursor:pointer}
+.loading-row{text-align:center;padding:32px}
+
+/* ── UPLOAD BOX ── */
+.upload-box{border-radius:var(--r-lg);border:2px dashed;padding:36px;text-align:center;cursor:pointer;transition:all .15s;margin:0 auto}
+body.light .upload-box{border-color:#cbd5e1;background:#fff}
+body.dark .upload-box{border-color:#334155;background:#1e293b}
+body.light .upload-box:hover,.upload-box.drag{border-color:var(--blue);background:#eff6ff}
+body.dark .upload-box:hover,.upload-box.drag{border-color:var(--blue)}
+.fmt-badges{display:flex;gap:6px;justify-content:center;margin-top:12px}
+.fmt-badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px}
+body.light .fmt-badge{background:#f1f5f9;color:#64748b}
+body.dark .fmt-badge{background:#0f172a;color:#64748b}
 </style>
 </head>
-<body>
+<body class="light">
 
+<!-- AUTH: LOGIN -->
 <div id="v-login" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-logo">GFin</div>
     <div class="auth-sub">Careli Assessoria Contábil</div>
-    <input type="email" id="l-email" placeholder="E-mail" autocomplete="username">
-    <input type="password" id="l-pass" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <input class="auth-input" type="email" id="l-email" placeholder="E-mail" autocomplete="username">
+    <input class="auth-input" type="password" id="l-pass" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="auth-btn" id="l-btn" onclick="doLogin()">Entrar</button>
     <div class="auth-err" id="l-err"></div>
   </div>
 </div>
 
+<!-- AUTH: SMS -->
 <div id="v-sms" class="auth-wrap" style="display:none">
   <div class="auth-card">
     <div class="auth-logo">GFin</div>
     <div class="auth-sub">Verificação em duas etapas</div>
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Código de 6 dígitos enviado por SMS</p>
+    <p style="font-size:13px;margin-bottom:20px;color:#64748b">Código de 6 dígitos enviado por SMS</p>
     <div class="sms-digits">
-      <input type="text" maxlength="1" id="sms0" oninput="smsInput(0)" onkeydown="smsBksp(event,0)">
-      <input type="text" maxlength="1" id="sms1" oninput="smsInput(1)" onkeydown="smsBksp(event,1)">
-      <input type="text" maxlength="1" id="sms2" oninput="smsInput(2)" onkeydown="smsBksp(event,2)">
-      <input type="text" maxlength="1" id="sms3" oninput="smsInput(3)" onkeydown="smsBksp(event,3)">
-      <input type="text" maxlength="1" id="sms4" oninput="smsInput(4)" onkeydown="smsBksp(event,4)">
-      <input type="text" maxlength="1" id="sms5" oninput="smsInput(5)" onkeydown="smsBksp(event,5)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms0" oninput="smsInput(0)" onkeydown="smsBksp(event,0)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms1" oninput="smsInput(1)" onkeydown="smsBksp(event,1)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms2" oninput="smsInput(2)" onkeydown="smsBksp(event,2)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms3" oninput="smsInput(3)" onkeydown="smsBksp(event,3)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms4" oninput="smsInput(4)" onkeydown="smsBksp(event,4)">
+      <input class="sms-digit" type="text" maxlength="1" id="sms5" oninput="smsInput(5)" onkeydown="smsBksp(event,5)">
     </div>
     <button class="auth-btn" id="sms-btn" onclick="verifySMS()">Verificar</button>
     <div class="auth-err" id="sms-err"></div>
@@ -143,187 +261,200 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
       <span class="auth-link" onclick="resendSMS()">Reenviar código</span> &nbsp;·&nbsp;
       <span class="auth-link" onclick="cancelSMS()">Cancelar</span>
     </div>
-    <div style="font-size:11px;color:var(--text-faint);margin-top:8px" id="sms-timer"></div>
+    <div style="font-size:11px;color:#94a3b8;margin-top:8px" id="sms-timer"></div>
   </div>
 </div>
 
-<div id="v-app" class="app-wrap" style="display:none">
-  <nav class="nav">
-    <div style="display:flex;align-items:center">
-      <span class="nav-brand">GFin</span>
-      <div class="nav-menu">
-        <button class="nav-item active" onclick="goPage('dashboard',this)">Dashboard</button>
-        <button class="nav-item" onclick="goPage('clientes',this)">Clientes</button>
-        <button class="nav-item" onclick="goPage('contas',this)">Contas a Receber</button>
-        <button class="nav-item" onclick="goPage('despesas',this)">Despesas</button>
-        <button class="nav-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)">Usuários</button>
-      </div>
-    </div>
-    <div class="nav-right">
-      <span class="nav-user" id="nav-user-name"></span>
-      <button class="btn" onclick="doLogout()">Sair</button>
-    </div>
-  </nav>
+<!-- APP -->
+<div id="v-app" class="app" style="display:none">
 
-  <!-- DASHBOARD -->
-  <div id="page-dashboard" class="page active">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h1 style="font-size:18px;font-weight:500">Dashboard</h1>
-      <div class="period-filter">
-        <select id="dash-mes" onchange="loadDashboard()"></select>
-        <select id="dash-ano" onchange="loadDashboard()"></select>
-      </div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">GFin</div>
+      <div class="sb-company">Careli Assessoria</div>
     </div>
-    <div class="cards-grid">
-      <div class="card"><div class="card-label">Total Faturado</div><div class="card-value" id="d-fat">—</div></div>
-      <div class="card"><div class="card-label" style="color:var(--green)">Recebido</div><div class="card-value" style="color:var(--green)" id="d-rec">—</div></div>
-      <div class="card"><div class="card-label" style="color:var(--amber)">Em Aberto</div><div class="card-value" style="color:var(--amber)" id="d-abr">—</div></div>
-      <div class="card"><div class="card-label" style="color:var(--red)">Despesas</div><div class="card-value" style="color:var(--red)" id="d-desp">—</div></div>
-      <div class="card"><div class="card-label">Saldo Líquido</div><div class="card-value" id="d-saldo">—</div></div>
+    <nav class="sb-nav">
+      <div class="sb-section-label">Principal</div>
+      <button class="sb-item active" onclick="goPage('dashboard',this)"><div class="sb-dot active"></div>Dashboard</button>
+      <button class="sb-item" onclick="goPage('clientes',this)"><div class="sb-dot"></div>Clientes</button>
+      <button class="sb-item" onclick="goPage('contas',this)"><div class="sb-dot"></div>Contas a Receber</button>
+      <button class="sb-item" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
+      <div class="sb-section-label">Admin</div>
+      <button class="sb-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)"><div class="sb-dot"></div>Usuários</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user-name" id="sb-nome"></div>
+      <div class="sb-user-email" id="sb-email"></div>
+      <button class="sb-exit" onclick="doLogout()">Sair</button>
     </div>
-    <div id="d-load" class="loading-row" style="display:none"><div class="spin"></div></div>
-  </div>
+  </aside>
 
-  <!-- CLIENTES -->
-  <div id="page-clientes" class="page">
-    <div class="tbl-header">
-      <span class="tbl-title">Clientes</span>
-      <div style="display:flex;gap:8px">
-        <button class="btn" onclick="document.getElementById('cli-file').click()">Importar XLS</button>
-        <input type="file" id="cli-file" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleClienteFile(this.files[0])">
-        <button class="btn btn-primary" onclick="openClienteModal()">+ Novo cliente</button>
-      </div>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:50px">Cód.</th><th>Nome</th>
-          <th style="width:150px">CNPJ / CPF</th>
-          <th style="width:130px">Telefone</th>
-          <th style="width:90px;text-align:right">Valor</th>
-          <th style="width:90px">Vencimento</th>
-          <th style="width:180px">E-mail</th>
-          <th style="width:70px"></th>
-        </tr></thead>
-        <tbody id="tb-clientes"><tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- CONTAS A RECEBER -->
-  <div id="page-contas" class="page">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <span class="tbl-title">Contas a Receber</span>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div class="period-filter">
-          <select id="cr-mes" onchange="loadCR()"></select>
-          <select id="cr-ano" onchange="loadCR()"></select>
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <div class="topbar-right">
+        <div class="theme-toggle">
+          <span class="theme-label" id="theme-label">Claro</span>
+          <button class="toggle-track" onclick="toggleTheme()"><div class="toggle-knob"></div></button>
         </div>
-        <button class="btn" onclick="openModal('modal-upload')">Importar</button>
-        <button class="btn" id="btn-cr-export" onclick="exportarCR()" style="display:none">Exportar CSV</button>
       </div>
     </div>
-    <div id="cr-cards" class="cards-grid" style="grid-template-columns:repeat(4,1fr);display:none">
-      <div class="card"><div class="card-label">Total Faturado</div><div class="card-value" id="cr-tot">—</div></div>
-      <div class="card"><div class="card-label" style="color:var(--green)">Recebido</div><div class="card-value" style="color:var(--green)" id="cr-rec">—</div></div>
-      <div class="card"><div class="card-label" style="color:var(--amber)">Em Aberto</div><div class="card-value" style="color:var(--amber)" id="cr-abr">—</div></div>
-      <div class="card"><div class="card-label">Recebidos / Clientes</div><div class="card-value" id="cr-cnt">—</div></div>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:50px">Cód.</th><th>Nome</th>
-          <th style="width:150px">CNPJ / CPF</th>
-          <th style="width:64px">Boleto</th>
-          <th style="width:92px;text-align:right">Valor</th>
-          <th style="width:36px;text-align:center">Dis</th>
-          <th style="width:90px">Vencimento</th>
-          <th style="width:54px;text-align:center">Pgto</th>
-          <th style="width:92px;text-align:right">Saldo</th>
-        </tr></thead>
-        <tbody id="tb-contas"><tr><td colspan="9" class="empty">Selecione um período ou importe um arquivo</td></tr></tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- DESPESAS -->
-  <div id="page-despesas" class="page">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <span class="tbl-title">Despesas</span>
-      <div class="period-filter">
-        <select id="desp-mes" onchange="loadDespLanc()"></select>
-        <select id="desp-ano" onchange="loadDespLanc()"></select>
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page-content">
+      <div class="page-header">
+        <span class="page-title">Dashboard</span>
+        <div style="display:flex;gap:8px">
+          <select class="sel" id="dash-mes" onchange="loadDashboard()"></select>
+          <select class="sel" id="dash-ano" onchange="loadDashboard()"></select>
+        </div>
+      </div>
+      <div class="cards-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kcard"><div class="kcard-bar" style="background:var(--blue)"></div><div class="kcard-label">Total Faturado</div><div class="kcard-value" style="color:var(--blue)" id="d-fat">—</div><div class="kcard-sub" id="d-fat-sub"></div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--green)"></div><div class="kcard-label">Recebido</div><div class="kcard-value" style="color:var(--green)" id="d-rec">—</div><div class="kcard-sub" id="d-rec-sub"></div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--amber)"></div><div class="kcard-label">Em Aberto</div><div class="kcard-value" style="color:var(--amber)" id="d-abr">—</div><div class="kcard-sub" id="d-abr-sub"></div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--red)"></div><div class="kcard-label">Despesas</div><div class="kcard-value" style="color:var(--red)" id="d-desp">—</div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--green)"></div><div class="kcard-label">Saldo Líquido</div><div class="kcard-value" id="d-saldo">—</div></div>
+      </div>
+      <div id="d-load" class="loading-row" style="display:none"><div class="spin"></div></div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="page-clientes" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Clientes</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="document.getElementById('cli-file').click()">Importar XLS</button>
+          <input type="file" id="cli-file" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleClienteFile(this.files[0])">
+          <button class="btn btn-primary" onclick="openClienteModal()">+ Novo cliente</button>
+        </div>
+      </div>
+      <div class="tbl-section">
+        <table>
+          <thead><tr>
+            <th style="width:52px">Cód.</th><th>Nome</th>
+            <th style="width:152px">CNPJ / CPF</th>
+            <th style="width:128px">Telefone</th>
+            <th style="width:88px;text-align:right">Valor</th>
+            <th style="width:88px">Vencimento</th>
+            <th style="width:176px">E-mail</th>
+            <th style="width:70px"></th>
+          </tr></thead>
+          <tbody id="tb-clientes"><tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr></tbody>
+        </table>
       </div>
     </div>
-    <div class="tree-wrap">
-      <div>
-        <div class="tree-panel" style="margin-bottom:12px">
-          <div class="tree-panel-hdr">
-            <span class="tree-panel-title">Grupos</span>
-            <button class="btn btn-sm" onclick="openGrupoModal()">+ Grupo</button>
+
+    <!-- CONTAS A RECEBER -->
+    <div id="page-contas" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Contas a Receber</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="sel" id="cr-mes" onchange="loadCR()"></select>
+          <select class="sel" id="cr-ano" onchange="loadCR()"></select>
+          <button class="btn" onclick="openModal('modal-upload')">Importar</button>
+          <button class="btn" id="btn-cr-export" onclick="exportarCR()" style="display:none">Exportar CSV</button>
+        </div>
+      </div>
+      <div id="cr-cards" class="cards-grid" style="display:none">
+        <div class="kcard"><div class="kcard-bar" style="background:var(--blue)"></div><div class="kcard-label">Total Faturado</div><div class="kcard-value" style="color:var(--blue)" id="cr-tot">—</div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--green)"></div><div class="kcard-label">Recebido</div><div class="kcard-value" style="color:var(--green)" id="cr-rec">—</div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--amber)"></div><div class="kcard-label">Em Aberto</div><div class="kcard-value" style="color:var(--amber)" id="cr-abr">—</div></div>
+        <div class="kcard"><div class="kcard-bar" style="background:var(--blue)"></div><div class="kcard-label">Recebidos / Clientes</div><div class="kcard-value" style="color:var(--blue)" id="cr-cnt">—</div></div>
+      </div>
+      <div class="tbl-section">
+        <table>
+          <thead><tr>
+            <th style="width:50px">Cód.</th><th>Nome</th>
+            <th style="width:148px">CNPJ / CPF</th>
+            <th style="width:62px">Boleto</th>
+            <th style="width:90px;text-align:right">Valor</th>
+            <th style="width:34px;text-align:center">Dis</th>
+            <th style="width:88px">Vencimento</th>
+            <th style="width:52px;text-align:center">Pgto</th>
+            <th style="width:90px;text-align:right">Saldo</th>
+            <th style="width:68px;text-align:center">Status</th>
+          </tr></thead>
+          <tbody id="tb-contas"><tr><td colspan="10" class="empty">Selecione um período ou importe um arquivo</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DESPESAS -->
+    <div id="page-despesas" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Despesas</span>
+        <div style="display:flex;gap:8px">
+          <select class="sel" id="desp-mes" onchange="loadDespLanc()"></select>
+          <select class="sel" id="desp-ano" onchange="loadDespLanc()"></select>
+        </div>
+      </div>
+      <div class="tree-layout">
+        <div>
+          <div class="tree-panel" style="margin-bottom:12px">
+            <div class="tree-panel-hdr"><span class="tree-panel-label">Grupos</span><button class="btn btn-sm btn-primary" onclick="openGrupoModal()">+ Grupo</button></div>
+            <div id="tree-grupos"><div class="loading-row"><div class="spin"></div></div></div>
           </div>
-          <div id="tree-grupos"><div class="loading-row"><div class="spin"></div></div></div>
-        </div>
-        <div class="tree-panel">
-          <div class="tree-panel-hdr">
-            <span class="tree-panel-title">Subgrupos</span>
-            <button class="btn btn-sm" onclick="openSubgrupoModal()">+ Subgrupo</button>
+          <div class="tree-panel">
+            <div class="tree-panel-hdr"><span class="tree-panel-label">Subgrupos</span><button class="btn btn-sm btn-primary" onclick="openSubgrupoModal()">+ Subgrupo</button></div>
+            <div id="tree-subgrupos"><div class="empty">Selecione um grupo</div></div>
           </div>
-          <div id="tree-subgrupos"><div class="empty">Selecione um grupo</div></div>
         </div>
-      </div>
-      <div>
-        <div class="tbl-header">
-          <span id="desp-panel-title" style="font-size:13px;color:var(--text-dim)">Selecione um subgrupo</span>
-          <button class="btn btn-primary" id="btn-nova-desp" onclick="openDespModal()" style="display:none">+ Lançamento</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr>
-              <th>Descrição</th>
-              <th style="width:110px;text-align:right">Valor</th>
-              <th style="width:100px">Data</th>
-              <th style="width:90px;text-align:center">Status</th>
-              <th style="width:60px"></th>
-            </tr></thead>
-            <tbody id="tb-despesas"><tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr></tbody>
-          </table>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span id="desp-panel-title" style="font-size:13px;font-weight:500;color:#94a3b8">Selecione um subgrupo</span>
+            <button class="btn btn-sm btn-primary" id="btn-nova-desp" onclick="openDespModal()" style="display:none">+ Lançamento</button>
+          </div>
+          <div class="tbl-section">
+            <table>
+              <thead><tr>
+                <th>Descrição</th>
+                <th style="width:110px;text-align:right">Valor</th>
+                <th style="width:100px">Data</th>
+                <th style="width:88px;text-align:center">Status</th>
+                <th style="width:56px"></th>
+              </tr></thead>
+              <tbody id="tb-despesas"><tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- USUÁRIOS -->
-  <div id="page-usuarios" class="page">
-    <div class="tbl-header">
-      <span class="tbl-title">Usuários</span>
-      <button class="btn btn-primary" onclick="openUsuarioModal()">+ Novo usuário</button>
-    </div>
-    <div class="notice">O telefone cadastrado aqui é usado para envio do código SMS de verificação.</div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>E-mail</th><th>Nome</th>
-          <th style="width:160px">Telefone</th>
-          <th style="width:70px;text-align:center">Admin</th>
-          <th style="width:80px"></th>
-        </tr></thead>
-        <tbody id="tb-usuarios"><tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr></tbody>
-      </table>
+    <!-- USUÁRIOS -->
+    <div id="page-usuarios" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Usuários</span>
+        <button class="btn btn-primary" onclick="openUsuarioModal()">+ Novo usuário</button>
+      </div>
+      <div class="notice">O telefone cadastrado aqui é usado para envio do código SMS de verificação.</div>
+      <div class="tbl-section">
+        <table>
+          <thead><tr>
+            <th>E-mail</th><th>Nome</th>
+            <th style="width:150px">Telefone</th>
+            <th style="width:70px;text-align:center">Admin</th>
+            <th style="width:80px"></th>
+          </tr></thead>
+          <tbody id="tb-usuarios"><tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL CLIENTE -->
+<!-- MODAIS -->
 <div id="modal-cliente" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-cliente')">
   <div class="modal">
     <div class="modal-title" id="mc-title">Novo Cliente</div>
-    <div class="form-row-2">
+    <div class="form-2">
       <div class="form-row"><label class="form-label">Cód.</label><input class="form-input" id="mc-cod" type="number"></div>
       <div class="form-row"><label class="form-label">CNPJ / CPF</label><input class="form-input" id="mc-cnpj"></div>
     </div>
     <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="mc-nome"></div>
-    <div class="form-row-2">
+    <div class="form-2">
       <div class="form-row"><label class="form-label">Telefone</label><input class="form-input" id="mc-tel"></div>
       <div class="form-row"><label class="form-label">E-mail</label><input class="form-input" id="mc-email" type="email"></div>
     </div>
@@ -334,7 +465,6 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   </div>
 </div>
 
-<!-- MODAL GRUPO -->
 <div id="modal-grupo" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-grupo')">
   <div class="modal" style="width:360px">
     <div class="modal-title">Grupo de Despesa</div>
@@ -346,7 +476,6 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   </div>
 </div>
 
-<!-- MODAL SUBGRUPO -->
 <div id="modal-subgrupo" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-subgrupo')">
   <div class="modal" style="width:360px">
     <div class="modal-title">Subgrupo de Despesa</div>
@@ -358,12 +487,11 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   </div>
 </div>
 
-<!-- MODAL DESPESA -->
 <div id="modal-despesa" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-despesa')">
   <div class="modal">
     <div class="modal-title">Novo Lançamento</div>
     <div class="form-row"><label class="form-label">Descrição</label><input class="form-input" id="md-desc"></div>
-    <div class="form-row-2">
+    <div class="form-2">
       <div class="form-row"><label class="form-label">Valor (R$)</label><input class="form-input" id="md-valor" type="number" step="0.01"></div>
       <div class="form-row"><label class="form-label">Data</label><input class="form-input" id="md-data" type="date"></div>
     </div>
@@ -377,7 +505,6 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   </div>
 </div>
 
-<!-- MODAL USUÁRIO -->
 <div id="modal-usuario" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-usuario')">
   <div class="modal">
     <div class="modal-title" id="mu-title">Novo Usuário</div>
@@ -385,8 +512,8 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
     <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="mu-nome"></div>
     <div class="form-row"><label class="form-label">E-mail</label><input class="form-input" id="mu-email" type="email"></div>
     <div class="form-row" id="mu-pass-row"><label class="form-label">Senha inicial</label><input class="form-input" id="mu-pass" type="password"></div>
-    <div class="form-row"><label class="form-label">Telefone (somente dígitos, com DDD)</label><input class="form-input" id="mu-tel" placeholder="61999999999"></div>
-    <div class="form-row"><label style="font-size:13px;cursor:pointer"><input type="checkbox" id="mu-admin" style="margin-right:6px">Administrador</label></div>
+    <div class="form-row"><label class="form-label">Telefone (DDD + número, somente dígitos)</label><input class="form-input" id="mu-tel" placeholder="61999999999"></div>
+    <div class="form-row"><label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px"><input type="checkbox" id="mu-admin">Administrador</label></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-usuario')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveUsuario()">Salvar</button>
@@ -394,17 +521,16 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
   </div>
 </div>
 
-<!-- MODAL UPLOAD -->
 <div id="modal-upload" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-upload')">
   <div class="modal" style="width:400px;text-align:center">
     <div class="modal-title">Importar Relação de Contas</div>
-    <div class="upload-box" id="cr-drop"
+    <div class="upload-box" id="cr-drop" style="max-width:100%"
       onclick="document.getElementById('cr-file').click()"
       ondragover="event.preventDefault();this.classList.add('drag')"
       ondragleave="this.classList.remove('drag')"
       ondrop="this.classList.remove('drag');event.preventDefault();handleCRFile(event.dataTransfer.files[0])">
-      <div style="font-size:15px;font-weight:500;margin-bottom:6px">Selecionar arquivo</div>
-      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Relação de Contas a Receber exportada do sistema</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Selecionar arquivo</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Relação de Contas a Receber exportada do sistema</div>
       <div class="fmt-badges"><span class="fmt-badge">XLS</span><span class="fmt-badge">XLSX</span><span class="fmt-badge">CSV</span></div>
     </div>
     <input type="file" id="cr-file" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleCRFile(this.files[0])">
@@ -423,16 +549,31 @@ const db=firebase.firestore();
 const KING_LOGIN='Cadann';
 const KING_TOKEN='28391fa5470c83f3e7caf697ab4fb010';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
 let curUser=null,curUserDoc=null,smsCode=null,smsExpiry=null,smsTimer=null;
 let crRecords=[],crMesAno=null;
 let selGrupoId=null,selSubgrupoId=null,editId=null;
 
-function populatePeriodSelects(){
+// ── THEME ─────────────────────────────────────────────
+function toggleTheme(){
+  const isDark=document.body.classList.contains('dark');
+  document.body.classList.toggle('light',isDark);
+  document.body.classList.toggle('dark',!isDark);
+  document.getElementById('theme-label').textContent=isDark?'Claro':'Escuro';
+  localStorage.setItem('gfin_theme',isDark?'light':'dark');
+}
+(function(){
+  const t=localStorage.getItem('gfin_theme')||'light';
+  document.body.className=t;
+  document.getElementById('theme-label').textContent=t==='dark'?'Escuro':'Claro';
+})();
+
+// ── PERIODS ───────────────────────────────────────────
+function populatePeriods(){
   const now=new Date();
   [['dash-mes','dash-ano'],['cr-mes','cr-ano'],['desp-mes','desp-ano']].forEach(([ms,as])=>{
     const sm=document.getElementById(ms),sa=document.getElementById(as);
     if(!sm||!sa)return;
+    sm.innerHTML='';sa.innerHTML='';
     MESES.forEach((m,i)=>{const o=new Option(m,i+1);if(i+1===now.getMonth()+1)o.selected=true;sm.appendChild(o);});
     for(let y=now.getFullYear();y>=2019;y--){const o=new Option(y,y);if(y===now.getFullYear())o.selected=true;sa.appendChild(o);}
   });
@@ -453,20 +594,15 @@ async function doLogin(){
     const snap=await db.collection('usuarios').doc(cred.user.uid).get();
     if(!snap.exists){err.textContent='Usuário não configurado.';await auth.signOut();btn.textContent='Entrar';btn.disabled=false;return;}
     curUserDoc=snap.data();
-    if(!curUserDoc.telefone){return;} // sem telefone, onAuthStateChanged cuida
-    // tem telefone: 2FA
+    if(!curUserDoc.telefone){return;}
     await auth.signOut();
     smsCode=String(Math.floor(100000+Math.random()*900000));
     smsExpiry=Date.now()+5*60*1000;
     await enviarSMS(curUserDoc.telefone,`GFin: seu codigo e ${smsCode}. Valido por 5 minutos.`);
-    showScreen('sms');
-    startSMSTimer();
+    showScreen('sms');startSMSTimer();
     document.getElementById('sms0').focus();
     btn.textContent='Entrar';btn.disabled=false;
-  }catch(e){
-    err.textContent='E-mail ou senha incorretos.';
-    btn.textContent='Entrar';btn.disabled=false;
-  }
+  }catch(e){err.textContent='E-mail ou senha incorretos.';btn.textContent='Entrar';btn.disabled=false;}
 }
 
 async function verifySMS(){
@@ -479,11 +615,9 @@ async function verifySMS(){
   if(code!==smsCode){err.textContent='Código incorreto.';return;}
   btn.textContent='Verificando...';btn.disabled=true;
   clearInterval(smsTimer);
-  const email=document.getElementById('l-email').value.trim();
-  const pass=document.getElementById('l-pass').value;
   try{
     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
-    await auth.signInWithEmailAndPassword(email,pass);
+    await auth.signInWithEmailAndPassword(document.getElementById('l-email').value.trim(),document.getElementById('l-pass').value);
   }catch(e){err.textContent='Erro ao autenticar.';btn.textContent='Verificar';btn.disabled=false;}
 }
 
@@ -506,7 +640,7 @@ function startSMSTimer(){
   const el=document.getElementById('sms-timer');
   smsTimer=setInterval(()=>{
     const r=Math.max(0,Math.floor((smsExpiry-Date.now())/1000));
-    el.textContent=r>0?`Expira em ${r}s`:'Código expirado';
+    el.textContent=r>0?`Expira em ${r}s`:'Expirado';
     if(r===0)clearInterval(smsTimer);
   },1000);
 }
@@ -531,11 +665,12 @@ auth.onAuthStateChanged(async user=>{
     curUser=user;
     const snap=await db.collection('usuarios').doc(user.uid).get();
     curUserDoc=snap.exists?snap.data():{};
-    document.getElementById('nav-user-name').textContent=curUserDoc.nome||user.email;
+    document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
+    document.getElementById('sb-email').textContent=user.email;
     if(curUserDoc.admin)document.getElementById('nav-usuarios').style.display='';
     clearInterval(smsTimer);
     showScreen('app');
-    populatePeriodSelects();
+    populatePeriods();
     loadDashboard();loadClientes();loadCR();loadGrupos();
   }else{
     curUser=null;
@@ -547,24 +682,27 @@ auth.onAuthStateChanged(async user=>{
 function showScreen(s){
   document.getElementById('v-login').style.display=s==='login'?'':'none';
   document.getElementById('v-sms').style.display=s==='sms'?'':'none';
-  document.getElementById('v-app').style.display=s==='app'?'':'none';
+  document.getElementById('v-app').style.display=s==='app'?'flex':'none';
 }
 
 // ── NAV ───────────────────────────────────────────────
 function goPage(name,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  btn.classList.add('active');
+  document.querySelectorAll('.page-content').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
+  document.getElementById('page-'+name).style.display='';
+  btn.classList.add('active');btn.querySelector('.sb-dot')?.classList.add('active');
+  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários'};
+  document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='dashboard')loadDashboard();
   if(name==='clientes')loadClientes();
   if(name==='contas')loadCR();
-  if(name==='despesas'){loadGrupos();}
+  if(name==='despesas')loadGrupos();
   if(name==='usuarios')loadUsuarios();
 }
+
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';editId=null;}
-function brl(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function brl(n){return'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function getMesAno(ms,as){return{mes:parseInt(document.getElementById(ms).value),ano:parseInt(document.getElementById(as).value)};}
 
 // ── DASHBOARD ─────────────────────────────────────────
@@ -574,14 +712,17 @@ async function loadDashboard(){
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
   try{
     const crSnap=await db.collection('contas_receber').doc(ma).get();
-    let fat=0,rec=0;
-    if(crSnap.exists){const r=crSnap.data().registros||[];fat=r.reduce((s,x)=>s+(x.valor||0),0);rec=r.reduce((s,x)=>s+(x.pgto?x.valor:0),0);}
+    let fat=0,rec=0,cnt=0,total=0;
+    if(crSnap.exists){const r=crSnap.data().registros||[];total=r.length;fat=r.reduce((s,x)=>s+(x.valor||0),0);rec=r.reduce((s,x)=>s+(x.pgto?x.valor:0),0);cnt=r.filter(x=>x.pgto).length;}
     const dSnap=await db.collection('despesas').where('mesAno','==',ma).get();
     let desp=0;dSnap.forEach(d=>desp+=(d.data().valor||0));
     const saldo=rec-desp;
     document.getElementById('d-fat').textContent=brl(fat);
+    document.getElementById('d-fat-sub').textContent=`${total} clientes · ${MESES[mes-1]}/${ano}`;
     document.getElementById('d-rec').textContent=brl(rec);
+    document.getElementById('d-rec-sub').textContent=fat>0?`${Math.round(rec/fat*100)}% do total`:'';
     document.getElementById('d-abr').textContent=brl(fat-rec);
+    document.getElementById('d-abr-sub').textContent=`${total-cnt} clientes pendentes`;
     document.getElementById('d-desp').textContent=brl(desp);
     document.getElementById('d-saldo').textContent=brl(saldo);
     document.getElementById('d-saldo').style.color=saldo>=0?'var(--green)':'var(--red)';
@@ -593,15 +734,17 @@ async function loadDashboard(){
 async function loadClientes(){
   const tb=document.getElementById('tb-clientes');
   tb.innerHTML='<tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr>';
-  const snap=await db.collection('clientes').orderBy('cod').get();
-  if(snap.empty){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
-  tb.innerHTML='';
-  snap.forEach(doc=>{
-    const c=doc.data(),id=doc.id;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-faint">${c.cnpj||''}</td><td class="td-faint">${c.telefone||''}</td><td class="td-r td-mono">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-faint">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
-    tb.appendChild(tr);
-  });
+  try{
+    const snap=await db.collection('clientes').orderBy('cod').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
+    tb.innerHTML='';
+    snap.forEach(doc=>{
+      const c=doc.data(),id=doc.id;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td class="td-dim">${c.telefone||''}</td><td class="td-r td-mono">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){tb.innerHTML='<tr><td colspan="8" class="empty">Erro ao carregar</td></tr>';}
 }
 
 function openClienteModal(){
@@ -609,18 +752,13 @@ function openClienteModal(){
   ['cod','cnpj','nome','tel','email'].forEach(f=>document.getElementById('mc-'+f).value='');
   openModal('modal-cliente');
 }
-
 async function editCliente(id){
   editId=id;const doc=await db.collection('clientes').doc(id).get();const c=doc.data();
   document.getElementById('mc-title').textContent='Editar Cliente';
-  document.getElementById('mc-cod').value=c.cod||'';
-  document.getElementById('mc-cnpj').value=c.cnpj||'';
-  document.getElementById('mc-nome').value=c.nome||'';
-  document.getElementById('mc-tel').value=c.telefone||'';
-  document.getElementById('mc-email').value=c.email||'';
-  openModal('modal-cliente');
+  document.getElementById('mc-cod').value=c.cod||'';document.getElementById('mc-cnpj').value=c.cnpj||'';
+  document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-tel').value=c.telefone||'';
+  document.getElementById('mc-email').value=c.email||'';openModal('modal-cliente');
 }
-
 async function saveCliente(){
   const data={cod:parseInt(document.getElementById('mc-cod').value)||0,cnpj:document.getElementById('mc-cnpj').value.trim(),nome:document.getElementById('mc-nome').value.trim(),telefone:document.getElementById('mc-tel').value.trim(),email:document.getElementById('mc-email').value.trim()};
   if(!data.nome){alert('Nome obrigatório.');return;}
@@ -646,17 +784,11 @@ function handleClienteFile(file){
       for(const r of clientes){
         if(!r.cod)continue;
         const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
-        if(snap.empty){
-          await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
-          novos++;
-        } else {
-          await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
-          atualizados++;
-        }
+        if(snap.empty){await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});novos++;}
+        else{await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});atualizados++;}
       }
       alert(`Importação concluída. ${novos} novos, ${atualizados} atualizados.`);
-      document.getElementById('cli-file').value='';
-      loadClientes();
+      document.getElementById('cli-file').value='';loadClientes();
     }catch(err){alert('Erro: '+err.message);}
   };
   reader.readAsArrayBuffer(file);
@@ -665,22 +797,19 @@ function handleClienteFile(file){
 // ── CONTAS A RECEBER ──────────────────────────────────
 async function loadCR(){
   const{mes,ano}=getMesAno('cr-mes','cr-ano');
-  const ma=`${ano}-${String(mes).padStart(2,'0')}`;
-  crMesAno=ma;
+  const ma=`${ano}-${String(mes).padStart(2,'0')}`;crMesAno=ma;
   const tb=document.getElementById('tb-contas');
-  tb.innerHTML='<tr><td colspan="9" class="loading-row"><div class="spin"></div></td></tr>';
-  const snap=await db.collection('contas_receber').doc(ma).get();
-  if(!snap.exists||!(snap.data().registros||[]).length){
-    crRecords=[];
-    tb.innerHTML='<tr><td colspan="9" class="empty">Nenhum dado para este período</td></tr>';
-    document.getElementById('cr-cards').style.display='none';
-    document.getElementById('btn-cr-export').style.display='none';
-    return;
-  }
-  crRecords=snap.data().registros||[];
-  document.getElementById('cr-cards').style.display='';
-  document.getElementById('btn-cr-export').style.display='';
-  renderCR();updateCRCards();
+  tb.innerHTML='<tr><td colspan="10" class="loading-row"><div class="spin"></div></td></tr>';
+  try{
+    const snap=await db.collection('contas_receber').doc(ma).get();
+    if(!snap.exists||!(snap.data().registros||[]).length){
+      crRecords=[];tb.innerHTML='<tr><td colspan="10" class="empty">Nenhum dado para este período</td></tr>';
+      document.getElementById('cr-cards').style.display='none';document.getElementById('btn-cr-export').style.display='none';return;
+    }
+    crRecords=snap.data().registros||[];
+    document.getElementById('cr-cards').style.display='';document.getElementById('btn-cr-export').style.display='';
+    renderCR();updateCRCards();
+  }catch(e){tb.innerHTML='<tr><td colspan="10" class="empty">Erro ao carregar</td></tr>';}
 }
 
 function renderCR(){
@@ -688,7 +817,7 @@ function renderCR(){
   crRecords.forEach((r,i)=>{
     const paid=r.pgto!=='';
     const tr=document.createElement('tr');tr.className=paid?'tr-paid':'';
-    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-faint">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono">${brl(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'sl-paid':'sl-open'}" id="crsl-${i}">${brl(r.saldo)}</td>`;
+    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono">${brl(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}">${brl(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
     tb.appendChild(tr);
   });
 }
@@ -696,21 +825,18 @@ function renderCR(){
 function onPgto(input){
   const i=+input.dataset.i,v=input.value.trim();
   crRecords[i].pgto=v;crRecords[i].saldo=v?0:crRecords[i].valor;
-  const row=input.closest('tr'),sl=document.getElementById('crsl-'+i);
-  if(v){row.className='tr-paid';input.classList.add('ok');sl.className='td-r sl-paid';}
-  else{row.className='';input.classList.remove('ok');sl.className='td-r sl-open';}
-  sl.textContent=brl(crRecords[i].saldo);
-  updateCRCards();saveCR();
+  const row=input.closest('tr'),sl=document.getElementById('crsl-'+i),bg=document.getElementById('crbg-'+i);
+  if(v){row.className='tr-paid';input.classList.add('ok');sl.className='td-r saldo-paid';bg.className='badge b-paid';bg.textContent='Pago';}
+  else{row.className='';input.classList.remove('ok');sl.className='td-r saldo-open';bg.className='badge b-open';bg.textContent='Aberto';}
+  sl.textContent=brl(crRecords[i].saldo);updateCRCards();saveCR();
 }
 
 function updateCRCards(){
   const tot=crRecords.reduce((s,r)=>s+r.valor,0);
   const rec=crRecords.reduce((s,r)=>s+(r.pgto?r.valor:0),0);
   const cnt=crRecords.filter(r=>r.pgto).length;
-  document.getElementById('cr-tot').textContent=brl(tot);
-  document.getElementById('cr-rec').textContent=brl(rec);
-  document.getElementById('cr-abr').textContent=brl(tot-rec);
-  document.getElementById('cr-cnt').textContent=`${cnt} / ${crRecords.length}`;
+  document.getElementById('cr-tot').textContent=brl(tot);document.getElementById('cr-rec').textContent=brl(rec);
+  document.getElementById('cr-abr').textContent=brl(tot-rec);document.getElementById('cr-cnt').textContent=`${cnt} / ${crRecords.length}`;
 }
 
 let saveTO=null;
@@ -743,8 +869,7 @@ function handleCRFile(file){
       await db.collection('contas_receber').doc(crMesAno).set({registros:crRecords,updatedAt:new Date()});
       await syncClientes(parsed);
       closeModal('modal-upload');
-      document.getElementById('cr-cards').style.display='';
-      document.getElementById('btn-cr-export').style.display='';
+      document.getElementById('cr-cards').style.display='';document.getElementById('btn-cr-export').style.display='';
       renderCR();updateCRCards();
     }catch(err){document.getElementById('upload-err').textContent='Erro: '+err.message;}
   };
@@ -780,12 +905,8 @@ async function syncClientes(records){
   for(const r of records){
     if(!r.cod)continue;
     const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
-    if(snap.empty){
-      await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
-    } else {
-      // atualiza telefone e valor se já existir
-      await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
-    }
+    if(snap.empty)await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
+    else await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
   }
 }
 
@@ -793,24 +914,24 @@ async function syncClientes(records){
 async function loadGrupos(){
   const el=document.getElementById('tree-grupos');
   el.innerHTML='<div class="loading-row"><div class="spin"></div></div>';
-  const snap=await db.collection('grupos_despesa').orderBy('nome').get();
-  if(snap.empty){el.innerHTML='<div class="empty">Nenhum grupo</div>';return;}
-  el.innerHTML='';
-  snap.forEach(doc=>{
-    const d=doc.data(),id=doc.id;
-    const div=document.createElement('div');
-    div.className='tree-item'+(selGrupoId===id?' selected':'');
-    div.innerHTML=`<span style="flex:1" onclick="selectGrupo('${id}')">${d.nome}</span><div class="tree-item-actions"><button class="btn btn-sm btn-danger" onclick="delGrupo('${id}',event)">✕</button></div>`;
-    el.appendChild(div);
-  });
+  try{
+    const snap=await db.collection('grupos_despesa').orderBy('nome').get();
+    if(snap.empty){el.innerHTML='<div class="empty">Nenhum grupo</div>';return;}
+    el.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const div=document.createElement('div');
+      div.className='tree-item'+(selGrupoId===id?' selected':'');
+      div.innerHTML=`<span style="flex:1" onclick="selectGrupo('${id}')">${d.nome}</span><button class="tree-item-del" onclick="delGrupo('${id}',event)">✕</button>`;
+      el.appendChild(div);
+    });
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
 }
 
 function selectGrupo(id){
   selGrupoId=id;selSubgrupoId=null;
-  document.querySelectorAll('#tree-grupos .tree-item').forEach(el=>{
-    const span=el.querySelector('span');
-    el.classList.toggle('selected',span?.onclick?.toString().includes(`'${id}'`));
-  });
+  document.querySelectorAll('#tree-grupos .tree-item').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.closest('.tree-item')?.classList.add('selected');
   loadSubgrupos();
   document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
   document.getElementById('desp-panel-title').textContent='Selecione um subgrupo';
@@ -821,16 +942,18 @@ async function loadSubgrupos(){
   if(!selGrupoId){document.getElementById('tree-subgrupos').innerHTML='<div class="empty">Selecione um grupo</div>';return;}
   const el=document.getElementById('tree-subgrupos');
   el.innerHTML='<div class="loading-row"><div class="spin"></div></div>';
-  const snap=await db.collection('subgrupos_despesa').where('grupoId','==',selGrupoId).orderBy('nome').get();
-  if(snap.empty){el.innerHTML='<div class="empty">Nenhum subgrupo</div>';return;}
-  el.innerHTML='';
-  snap.forEach(doc=>{
-    const d=doc.data(),id=doc.id;
-    const div=document.createElement('div');
-    div.className='tree-item'+(selSubgrupoId===id?' selected':'');
-    div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span><div class="tree-item-actions"><button class="btn btn-sm btn-danger" onclick="delSubgrupo('${id}',event)">✕</button></div>`;
-    el.appendChild(div);
-  });
+  try{
+    const snap=await db.collection('subgrupos_despesa').where('grupoId','==',selGrupoId).orderBy('nome').get();
+    if(snap.empty){el.innerHTML='<div class="empty">Nenhum subgrupo</div>';return;}
+    el.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const div=document.createElement('div');
+      div.className='tree-item'+(selSubgrupoId===id?' selected':'');
+      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span><button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button>`;
+      el.appendChild(div);
+    });
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
 }
 
 function selectSubgrupo(id,nome){
@@ -846,107 +969,92 @@ async function loadDespLanc(){
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
   const tb=document.getElementById('tb-despesas');
   tb.innerHTML='<tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr>';
-  const snap=await db.collection('despesas').where('subgrupoId','==',selSubgrupoId).where('mesAno','==',ma).orderBy('data').get();
-  if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum lançamento</td></tr>';return;}
-  tb.innerHTML='';
-  snap.forEach(doc=>{
-    const d=doc.data(),id=doc.id;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${d.descricao}</td><td class="td-r td-mono">${brl(d.valor)}</td><td class="td-mono">${d.data||''}</td><td class="td-c"><span class="badge ${d.status==='pago'?'badge-green':'badge-amber'}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="delDesp('${id}')">✕</button></td>`;
-    tb.appendChild(tr);
-  });
+  try{
+    const snap=await db.collection('despesas').where('subgrupoId','==',selSubgrupoId).where('mesAno','==',ma).orderBy('data').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum lançamento</td></tr>';return;}
+    tb.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${d.descricao}</td><td class="td-r td-mono">${brl(d.valor)}</td><td class="td-mono">${d.data||''}</td><td class="td-c"><span class="badge ${d.status==='pago'?'b-paid':'b-open'}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="delDesp('${id}')">✕</button></td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="empty">Erro ao carregar</td></tr>';}
 }
 
 function openGrupoModal(){document.getElementById('mg-nome').value='';openModal('modal-grupo');}
 async function saveGrupo(){
   const nome=document.getElementById('mg-nome').value.trim();
   if(!nome){alert('Digite o nome.');return;}
-  await db.collection('grupos_despesa').add({nome});
-  closeModal('modal-grupo');loadGrupos();
+  await db.collection('grupos_despesa').add({nome});closeModal('modal-grupo');loadGrupos();
 }
 async function delGrupo(id,e){
-  e.stopPropagation();
-  if(!confirm('Excluir grupo e todos os subgrupos?'))return;
+  e.stopPropagation();if(!confirm('Excluir grupo e subgrupos?'))return;
   const sub=await db.collection('subgrupos_despesa').where('grupoId','==',id).get();
-  const batch=db.batch();
-  sub.forEach(d=>batch.delete(d.ref));
-  batch.delete(db.collection('grupos_despesa').doc(id));
-  await batch.commit();
-  selGrupoId=null;selSubgrupoId=null;loadGrupos();
+  const batch=db.batch();sub.forEach(d=>batch.delete(d.ref));batch.delete(db.collection('grupos_despesa').doc(id));
+  await batch.commit();selGrupoId=null;selSubgrupoId=null;loadGrupos();
   document.getElementById('tree-subgrupos').innerHTML='<div class="empty">Selecione um grupo</div>';
   document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
 }
 
-function openSubgrupoModal(){if(!selGrupoId){alert('Selecione um grupo primeiro.');return;}document.getElementById('msg-nome').value='';openModal('modal-subgrupo');}
+function openSubgrupoModal(){if(!selGrupoId){alert('Selecione um grupo.');return;}document.getElementById('msg-nome').value='';openModal('modal-subgrupo');}
 async function saveSubgrupo(){
   const nome=document.getElementById('msg-nome').value.trim();
   if(!nome){alert('Digite o nome.');return;}
-  await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId});
-  closeModal('modal-subgrupo');loadSubgrupos();
+  await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId});closeModal('modal-subgrupo');loadSubgrupos();
 }
 async function delSubgrupo(id,e){
-  e.stopPropagation();
-  if(!confirm('Excluir subgrupo?'))return;
-  await db.collection('subgrupos_despesa').doc(id).delete();
-  selSubgrupoId=null;loadSubgrupos();
+  e.stopPropagation();if(!confirm('Excluir subgrupo?'))return;
+  await db.collection('subgrupos_despesa').doc(id).delete();selSubgrupoId=null;loadSubgrupos();
   document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
 }
 
 function openDespModal(){
-  document.getElementById('md-desc').value='';
-  document.getElementById('md-valor').value='';
+  document.getElementById('md-desc').value='';document.getElementById('md-valor').value='';
   document.getElementById('md-data').value=new Date().toISOString().split('T')[0];
-  document.getElementById('md-status').value='pendente';
-  openModal('modal-despesa');
+  document.getElementById('md-status').value='pendente';openModal('modal-despesa');
 }
 async function saveDespesa(){
   const{mes,ano}=getMesAno('desp-mes','desp-ano');
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
   const data={descricao:document.getElementById('md-desc').value.trim(),valor:parseFloat(document.getElementById('md-valor').value)||0,data:document.getElementById('md-data').value,status:document.getElementById('md-status').value,subgrupoId:selSubgrupoId,mesAno:ma};
   if(!data.descricao){alert('Descrição obrigatória.');return;}
-  await db.collection('despesas').add(data);
-  closeModal('modal-despesa');loadDespLanc();
+  await db.collection('despesas').add(data);closeModal('modal-despesa');loadDespLanc();
 }
-async function delDesp(id){if(!confirm('Excluir lançamento?'))return;await db.collection('despesas').doc(id).delete();loadDespLanc();}
+async function delDesp(id){if(!confirm('Excluir?'))return;await db.collection('despesas').doc(id).delete();loadDespLanc();}
 
 // ── USUÁRIOS ──────────────────────────────────────────
 async function loadUsuarios(){
   const tb=document.getElementById('tb-usuarios');
   tb.innerHTML='<tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr>';
-  const snap=await db.collection('usuarios').get();
-  if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum usuário</td></tr>';return;}
-  tb.innerHTML='';
-  snap.forEach(doc=>{
-    const u=doc.data(),id=doc.id;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${u.email||''}</td><td>${u.nome||''}</td><td class="td-faint">${u.telefone||''}</td><td class="td-c">${u.admin?'✓':''}</td><td><button class="btn btn-sm" onclick="editUsuario('${id}')">Editar</button></td>`;
-    tb.appendChild(tr);
-  });
+  try{
+    const snap=await db.collection('usuarios').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum usuário</td></tr>';return;}
+    tb.innerHTML='';
+    snap.forEach(doc=>{
+      const u=doc.data(),id=doc.id;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${u.email||''}</td><td>${u.nome||''}</td><td class="td-dim">${u.telefone||''}</td><td class="td-c">${u.admin?'✓':''}</td><td><button class="btn btn-sm" onclick="editUsuario('${id}')">Editar</button></td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="empty">Erro ao carregar</td></tr>';}
 }
 
 function openUsuarioModal(){
-  editId=null;
-  document.getElementById('mu-title').textContent='Novo Usuário';
-  document.getElementById('mu-notice').style.display='none';
-  document.getElementById('mu-pass-row').style.display='';
+  editId=null;document.getElementById('mu-title').textContent='Novo Usuário';
+  document.getElementById('mu-notice').style.display='none';document.getElementById('mu-pass-row').style.display='';
   ['nome','email','pass','tel'].forEach(f=>document.getElementById('mu-'+f).value='');
-  document.getElementById('mu-admin').checked=false;
-  openModal('modal-usuario');
+  document.getElementById('mu-admin').checked=false;openModal('modal-usuario');
 }
-
 async function editUsuario(id){
   editId=id;const doc=await db.collection('usuarios').doc(id).get();const u=doc.data();
   document.getElementById('mu-title').textContent='Editar Usuário';
   document.getElementById('mu-notice').textContent='Para alterar a senha use o Firebase Console.';
-  document.getElementById('mu-notice').style.display='';
-  document.getElementById('mu-pass-row').style.display='none';
-  document.getElementById('mu-nome').value=u.nome||'';
-  document.getElementById('mu-email').value=u.email||'';
-  document.getElementById('mu-tel').value=u.telefone||'';
-  document.getElementById('mu-admin').checked=u.admin||false;
+  document.getElementById('mu-notice').style.display='';document.getElementById('mu-pass-row').style.display='none';
+  document.getElementById('mu-nome').value=u.nome||'';document.getElementById('mu-email').value=u.email||'';
+  document.getElementById('mu-tel').value=u.telefone||'';document.getElementById('mu-admin').checked=u.admin||false;
   openModal('modal-usuario');
 }
-
 async function saveUsuario(){
   const nome=document.getElementById('mu-nome').value.trim();
   const email=document.getElementById('mu-email').value.trim();
