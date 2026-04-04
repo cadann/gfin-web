@@ -476,7 +476,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
 
 <div id="modal-grupo" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-grupo')">
   <div class="modal" style="width:360px">
-    <div class="modal-title">Grupo de Despesa</div>
+    <div class="modal-title" id="mg-title">Grupo de Despesa</div>
     <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="mg-nome"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-grupo')">Cancelar</button>
@@ -487,7 +487,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
 
 <div id="modal-subgrupo" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal('modal-subgrupo')">
   <div class="modal" style="width:380px">
-    <div class="modal-title">Subgrupo de Despesa</div>
+    <div class="modal-title" id="msg-title">Subgrupo de Despesa</div>
     <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="msg-nome"></div>
     <div class="form-row">
       <label class="form-label">Classificação</label>
@@ -968,7 +968,7 @@ async function loadGrupos(){
       const d=doc.data(),id=doc.id;
       const div=document.createElement('div');
       div.className='tree-item'+(selGrupoId===id?' selected':'');
-      div.innerHTML=`<span style="flex:1" onclick="selectGrupo('${id}')">${d.nome}</span><button class="tree-item-del" onclick="delGrupo('${id}',event)">✕</button>`;
+      div.innerHTML=`<span style="flex:1" onclick="selectGrupo('${id}')">${d.nome}</span><div class="tree-item-actions"><button class="btn btn-sm" onclick="editGrupo('${id}','${d.nome.replace(/'/g,"\\'")}')" style="font-size:10px;padding:2px 8px">Editar</button><button class="tree-item-del" onclick="delGrupo('${id}',event)">✕</button></div>`;
       el.appendChild(div);
     });
   }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
@@ -998,7 +998,7 @@ async function loadSubgrupos(){
       const badge=d.classificacao?`<span class="cls-btn ${clsBadge[d.classificacao]||''}" style="flex:none;padding:2px 8px;font-size:10px;pointer-events:none">${d.classificacao}</span>`:'';
       const div=document.createElement('div');
       div.className='tree-item'+(selSubgrupoId===id?' selected':'');
-      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span>${badge}<button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button>`;
+      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span>${badge}<div class="tree-item-actions"><button class="btn btn-sm" onclick="editSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}','${d.classificacao||''}')" style="font-size:10px;padding:2px 8px">Editar</button><button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button></div>`;
       el.appendChild(div);
     });
   }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
@@ -1030,11 +1030,26 @@ async function loadDespLanc(){
   }catch(e){tb.innerHTML='<tr><td colspan="5" class="empty">Erro ao carregar</td></tr>';}
 }
 
-function openGrupoModal(){document.getElementById('mg-nome').value='';openModal('modal-grupo');}
+function openGrupoModal(){document.getElementById('mg-nome').value='';document.getElementById('mg-title').textContent='Grupo de Despesa';editId=null;openModal('modal-grupo');}
+
+function editGrupo(id,nome){
+  editId=id;
+  document.getElementById('mg-title').textContent='Editar Grupo';
+  document.getElementById('mg-nome').value=nome;
+  openModal('modal-grupo');
+}
+
 async function saveGrupo(){
   const nome=document.getElementById('mg-nome').value.trim();
   if(!nome){alert('Digite o nome.');return;}
-  await db.collection('grupos_despesa').add({nome});closeModal('modal-grupo');loadGrupos();
+  if(editId){await db.collection('grupos_despesa').doc(editId).update({nome});editId=null;}
+  else{
+    // verifica duplicidade
+    const exist=await db.collection('grupos_despesa').where('nome','==',nome).limit(1).get();
+    if(!exist.empty){alert('Já existe um grupo com esse nome.');return;}
+    await db.collection('grupos_despesa').add({nome});
+  }
+  closeModal('modal-grupo');loadGrupos();
 }
 async function delGrupo(id,e){
   e.stopPropagation();if(!confirm('Excluir grupo e subgrupos?'))return;
@@ -1056,9 +1071,23 @@ function selClass(cls){
 
 function openSubgrupoModal(){
   if(!selGrupoId){alert('Selecione um grupo.');return;}
+  editId=null;
+  document.getElementById('msg-title').textContent='Subgrupo de Despesa';
   document.getElementById('msg-nome').value='';
   selectedClass='';
   ['cls-esc','cls-adr','cls-alv'].forEach(id=>document.getElementById(id).className='cls-btn');
+  openModal('modal-subgrupo');
+}
+
+function editSubgrupo(id,nome,cls){
+  editId=id;
+  document.getElementById('msg-title').textContent='Editar Subgrupo';
+  document.getElementById('msg-nome').value=nome;
+  selectedClass=cls;
+  ['cls-esc','cls-adr','cls-alv'].forEach(bid=>document.getElementById(bid).className='cls-btn');
+  if(cls==='Escritório')document.getElementById('cls-esc').classList.add('cls-esc');
+  if(cls==='Adriano')document.getElementById('cls-adr').classList.add('cls-adr');
+  if(cls==='Álvaro')document.getElementById('cls-alv').classList.add('cls-alv');
   openModal('modal-subgrupo');
 }
 
@@ -1066,7 +1095,12 @@ async function saveSubgrupo(){
   const nome=document.getElementById('msg-nome').value.trim();
   if(!nome){alert('Digite o nome.');return;}
   if(!selectedClass){alert('Selecione a classificação.');return;}
-  await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId,classificacao:selectedClass});
+  if(editId){
+    await db.collection('subgrupos_despesa').doc(editId).update({nome,classificacao:selectedClass});
+    editId=null;
+  } else {
+    await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId,classificacao:selectedClass});
+  }
   closeModal('modal-subgrupo');loadSubgrupos();
 }
 async function delSubgrupo(id,e){
