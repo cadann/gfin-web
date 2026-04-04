@@ -720,6 +720,7 @@ function goPage(name,btn){
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';editId=null;}
 function brl(n){return'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function num(n){return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function getMesAno(ms,as){return{mes:parseInt(document.getElementById(ms).value),ano:parseInt(document.getElementById(as).value)};}
 
 // ── DASHBOARD ─────────────────────────────────────────
@@ -862,7 +863,7 @@ function renderCR(){
   crRecords.forEach((r,i)=>{
     const paid=r.pgto!=='';
     const tr=document.createElement('tr');tr.className=paid?'tr-paid':'';
-    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono" style="white-space:nowrap">${brl(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}" style="white-space:nowrap">${brl(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
+    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono" style="white-space:nowrap">${num(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}" style="white-space:nowrap">${num(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
     tb.appendChild(tr);
   });
 }
@@ -873,7 +874,7 @@ function onPgto(input){
   const row=input.closest('tr'),sl=document.getElementById('crsl-'+i),bg=document.getElementById('crbg-'+i);
   if(v){row.className='tr-paid';input.classList.add('ok');sl.className='td-r saldo-paid';bg.className='badge b-paid';bg.textContent='Pago';}
   else{row.className='';input.classList.remove('ok');sl.className='td-r saldo-open';bg.className='badge b-open';bg.textContent='Aberto';}
-  sl.textContent=brl(crRecords[i].saldo);updateCRCards();saveCR();
+  sl.textContent=num(crRecords[i].saldo);updateCRCards();saveCR();
 }
 
 function updateCRCards(){
