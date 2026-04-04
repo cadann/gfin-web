@@ -460,6 +460,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <div class="form-row"><label class="form-label">Telefone</label><input class="form-input" id="mc-tel"></div>
       <div class="form-row"><label class="form-label">E-mail</label><input class="form-input" id="mc-email" type="email"></div>
     </div>
+    <div class="form-row"><label class="form-label">Senha do Certificado</label><input class="form-input" id="mc-senha-cert" type="password" placeholder="Senha do .pfx do cliente"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-cliente')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCliente()">Salvar</button>
@@ -769,7 +770,7 @@ async function loadClientes(){
 
 function openClienteModal(){
   editId=null;document.getElementById('mc-title').textContent='Novo Cliente';
-  ['cod','cnpj','nome','tel','email'].forEach(f=>document.getElementById('mc-'+f).value='');
+  ['cod','cnpj','nome','tel','email','senha-cert'].forEach(f=>document.getElementById('mc-'+f).value='');
   openModal('modal-cliente');
 }
 async function editCliente(id){
@@ -777,10 +778,20 @@ async function editCliente(id){
   document.getElementById('mc-title').textContent='Editar Cliente';
   document.getElementById('mc-cod').value=c.cod||'';document.getElementById('mc-cnpj').value=c.cnpj||'';
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-tel').value=c.telefone||'';
-  document.getElementById('mc-email').value=c.email||'';openModal('modal-cliente');
+  document.getElementById('mc-email').value=c.email||'';
+  document.getElementById('mc-senha-cert').value=c.senha_cert?atob(c.senha_cert):'';
+  openModal('modal-cliente');
 }
 async function saveCliente(){
-  const data={cod:parseInt(document.getElementById('mc-cod').value)||0,cnpj:document.getElementById('mc-cnpj').value.trim(),nome:document.getElementById('mc-nome').value.trim(),telefone:document.getElementById('mc-tel').value.trim(),email:document.getElementById('mc-email').value.trim()};
+  const senhaCert=document.getElementById('mc-senha-cert').value;
+  const data={
+    cod:parseInt(document.getElementById('mc-cod').value)||0,
+    cnpj:document.getElementById('mc-cnpj').value.trim(),
+    nome:document.getElementById('mc-nome').value.trim(),
+    telefone:document.getElementById('mc-tel').value.trim(),
+    email:document.getElementById('mc-email').value.trim(),
+    senha_cert:senhaCert?btoa(senhaCert):''
+  };
   if(!data.nome){alert('Nome obrigatório.');return;}
   if(editId)await db.collection('clientes').doc(editId).update(data);
   else await db.collection('clientes').add(data);
