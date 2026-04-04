@@ -336,8 +336,8 @@ body.dark .fmt-badge{background:#0f172a;color:#64748b}
           <thead><tr>
             <th style="width:52px">Cód.</th><th>Nome</th>
             <th style="width:152px">CNPJ / CPF</th>
-            <th style="width:128px">Telefone</th>
-            <th style="width:110px;text-align:right">Valor</th>
+            <th style="width:140px">Telefone</th>
+            <th style="width:120px;text-align:right">Valor</th>
             <th style="width:100px">Vencimento</th>
             <th style="width:176px">E-mail</th>
             <th style="width:70px"></th>
@@ -741,7 +741,7 @@ async function loadClientes(){
     snap.forEach(doc=>{
       const c=doc.data(),id=doc.id;
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td class="td-dim">${c.telefone||''}</td><td class="td-r td-mono">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
+      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td style="font-family:var(--mono);font-size:12px;white-space:nowrap">${c.telefone||''}</td><td style="text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
       tb.appendChild(tr);
     });
   }catch(e){tb.innerHTML='<tr><td colspan="8" class="empty">Erro ao carregar</td></tr>';}
