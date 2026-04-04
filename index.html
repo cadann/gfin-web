@@ -731,6 +731,24 @@ async function loadDashboard(){
 }
 
 // ── CLIENTES ──────────────────────────────────────────
+function fmtTel(t){
+  if(!t) return '';
+  const digits = t.replace(/\D/g,'');
+  if(digits.length < 10) return t;
+  const ddd = digits.slice(0,2);
+  const num = digits.slice(2);
+  let formatted;
+  if(num.length===9) formatted=`(${ddd}) ${num.slice(0,5)}-${num.slice(5)}`;
+  else formatted=`(${ddd})  ${num.slice(0,4)}-${num.slice(4)}`;
+  return formatted;
+}
+
+function fmtValor(v){
+  if(!v && v!==0) return '';
+  const s = Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return 'R$ '+s.padStart(12,' ');
+}
+
 async function loadClientes(){
   const tb=document.getElementById('tb-clientes');
   tb.innerHTML='<tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr>';
@@ -741,7 +759,7 @@ async function loadClientes(){
     snap.forEach(doc=>{
       const c=doc.data(),id=doc.id;
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td style="font-family:var(--mono);font-size:12px;white-space:nowrap">${c.telefone||''}</td><td style="text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
+      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td style="font-family:var(--mono);font-size:12px;white-space:pre">${fmtTel(c.telefone)}</td><td style="text-align:right;font-family:var(--mono);font-size:12px;white-space:pre">${c.valor?fmtValor(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
       tb.appendChild(tr);
     });
   }catch(e){tb.innerHTML='<tr><td colspan="8" class="empty">Erro ao carregar</td></tr>';}
