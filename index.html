@@ -197,13 +197,15 @@ tbody tr:hover td{background:rgba(0,0,0,0.012)}
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th style="width:60px">Cód.</th><th>Nome</th>
-          <th style="width:160px">CNPJ / CPF</th>
+          <th style="width:50px">Cód.</th><th>Nome</th>
+          <th style="width:150px">CNPJ / CPF</th>
           <th style="width:130px">Telefone</th>
-          <th style="width:200px">E-mail</th>
-          <th style="width:80px"></th>
+          <th style="width:90px;text-align:right">Valor</th>
+          <th style="width:90px">Vencimento</th>
+          <th style="width:180px">E-mail</th>
+          <th style="width:70px"></th>
         </tr></thead>
-        <tbody id="tb-clientes"><tr><td colspan="6" class="loading-row"><div class="spin"></div></td></tr></tbody>
+        <tbody id="tb-clientes"><tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -590,14 +592,14 @@ async function loadDashboard(){
 // ── CLIENTES ──────────────────────────────────────────
 async function loadClientes(){
   const tb=document.getElementById('tb-clientes');
-  tb.innerHTML='<tr><td colspan="6" class="loading-row"><div class="spin"></div></td></tr>';
+  tb.innerHTML='<tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr>';
   const snap=await db.collection('clientes').orderBy('cod').get();
-  if(snap.empty){tb.innerHTML='<tr><td colspan="6" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
+  if(snap.empty){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
   tb.innerHTML='';
   snap.forEach(doc=>{
     const c=doc.data(),id=doc.id;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-faint">${c.cnpj||''}</td><td class="td-faint">${c.telefone||''}</td><td class="td-faint">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
+    tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-faint">${c.cnpj||''}</td><td class="td-faint">${c.telefone||''}</td><td class="td-r td-mono">${c.valor?brl(c.valor):''}</td><td class="td-mono">${c.vencimento||''}</td><td class="td-faint">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
     tb.appendChild(tr);
   });
 }
@@ -640,13 +642,19 @@ function handleClienteFile(file){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
       const clientes=parseXLS(rows);
       if(!clientes.length){alert('Nenhum registro encontrado.');return;}
-      let novos=0;
+      let novos=0,atualizados=0;
       for(const r of clientes){
         if(!r.cod)continue;
         const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
-        if(snap.empty){await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:'',email:''});novos++;}
+        if(snap.empty){
+          await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
+          novos++;
+        } else {
+          await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
+          atualizados++;
+        }
       }
-      alert(`Importação concluída. ${novos} novos clientes adicionados.`);
+      alert(`Importação concluída. ${novos} novos, ${atualizados} atualizados.`);
       document.getElementById('cli-file').value='';
       loadClientes();
     }catch(err){alert('Erro: '+err.message);}
@@ -753,8 +761,9 @@ function parseXLS(rows){
       const valor=parseFloat(String(row[27]).replace(',','.'))||0;
       const emAberto=parseFloat(String(row[41]).replace(',','.'))||valor;
       const venc=fmtDate(row[1]);const dis=venc?parseInt(venc.split('/')[0],10):0;
-      let cnpj='';if(i+1<rows.length)cnpj=String(rows[i+1][8]||'').trim();
-      result.push({cod:Math.round(cod),nome,cnpj,boleto,valor:emAberto,dis,vencimento:venc,pgto:'',saldo:emAberto});
+      let cnpj='',telefone='';
+      if(i+1<rows.length){cnpj=String(rows[i+1][8]||'').trim();telefone=String(rows[i+1][13]||'').trim();}
+      result.push({cod:Math.round(cod),nome,cnpj,telefone,boleto,valor:emAberto,dis,vencimento:venc,pgto:'',saldo:emAberto});
     }
   }
   return result;
@@ -771,7 +780,12 @@ async function syncClientes(records){
   for(const r of records){
     if(!r.cod)continue;
     const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
-    if(snap.empty)await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:'',email:''});
+    if(snap.empty){
+      await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
+    } else {
+      // atualiza telefone e valor se já existir
+      await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
+    }
   }
 }
 
