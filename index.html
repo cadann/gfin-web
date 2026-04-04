@@ -378,11 +378,11 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
             <th style="width:50px">Cód.</th><th>Nome</th>
             <th style="width:148px">CNPJ / CPF</th>
             <th style="width:62px">Boleto</th>
-            <th style="width:90px;text-align:right">Valor</th>
+            <th style="width:110px;text-align:right">Valor</th>
             <th style="width:34px;text-align:center">Dis</th>
             <th style="width:88px">Vencimento</th>
             <th style="width:52px;text-align:center">Pgto</th>
-            <th style="width:90px;text-align:right">Saldo</th>
+            <th style="width:110px;text-align:right">Saldo</th>
             <th style="width:68px;text-align:center">Status</th>
           </tr></thead>
           <tbody id="tb-contas"><tr><td colspan="10" class="empty">Selecione um período ou importe um arquivo</td></tr></tbody>
@@ -862,7 +862,7 @@ function renderCR(){
   crRecords.forEach((r,i)=>{
     const paid=r.pgto!=='';
     const tr=document.createElement('tr');tr.className=paid?'tr-paid':'';
-    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono">${brl(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}">${brl(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
+    tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono" style="white-space:nowrap">${brl(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}" style="white-space:nowrap">${brl(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
     tb.appendChild(tr);
   });
 }
