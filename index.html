@@ -746,7 +746,7 @@ function fmtTel(t){
 function fmtValor(v){
   if(!v && v!==0) return '';
   const s = Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  return 'R$ '+s.padStart(12,' ');
+  return s.padStart(13,' ');
 }
 
 async function loadClientes(){
@@ -803,7 +803,7 @@ function handleClienteFile(file){
         if(!r.cod)continue;
         const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
         if(snap.empty){await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});novos++;}
-        else{await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});atualizados++;}
+        else{await snap.docs[0].ref.update({cnpj:r.cnpj||snap.docs[0].data().cnpj||'',telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});atualizados++;}
       }
       alert(`Importação concluída. ${novos} novos, ${atualizados} atualizados.`);
       document.getElementById('cli-file').value='';loadClientes();
@@ -925,7 +925,7 @@ async function syncClientes(records){
     if(!r.cod)continue;
     const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
     if(snap.empty)await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
-    else await snap.docs[0].ref.update({telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
+    else await snap.docs[0].ref.update({cnpj:r.cnpj||snap.docs[0].data().cnpj||'',telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
   }
 }
 
