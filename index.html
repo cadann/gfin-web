@@ -337,8 +337,8 @@ body.dark .fmt-badge{background:#0f172a;color:#64748b}
             <th style="width:52px">Cód.</th><th>Nome</th>
             <th style="width:152px">CNPJ / CPF</th>
             <th style="width:128px">Telefone</th>
-            <th style="width:88px;text-align:right">Valor</th>
-            <th style="width:88px">Vencimento</th>
+            <th style="width:110px;text-align:right">Valor</th>
+            <th style="width:100px">Vencimento</th>
             <th style="width:176px">E-mail</th>
             <th style="width:70px"></th>
           </tr></thead>
@@ -882,12 +882,13 @@ function parseXLS(rows){
     const row=rows[i];const cod=parseFloat(row[4]);
     if(!isNaN(cod)&&cod>0&&row[5]&&String(row[5]).trim()){
       const nome=String(row[5]).trim();
-      const boleto=row[21]?String(row[21]).replace('.0','').trim():'';
+      const boleto=row[19]?String(row[19]).replace('.0','').trim():'';
+
       const valor=parseFloat(String(row[27]).replace(',','.'))||0;
       const emAberto=parseFloat(String(row[41]).replace(',','.'))||valor;
       const venc=fmtDate(row[1]);const dis=venc?parseInt(venc.split('/')[0],10):0;
       let cnpj='',telefone='';
-      if(i+1<rows.length){cnpj=String(rows[i+1][8]||'').trim();telefone=String(rows[i+1][13]||'').trim();}
+      if(i+1<rows.length){cnpj=String(rows[i+1][7]||'').trim();telefone=String(rows[i+1][14]||'').trim();}
       result.push({cod:Math.round(cod),nome,cnpj,telefone,boleto,valor:emAberto,dis,vencimento:venc,pgto:'',saldo:emAberto});
     }
   }
