@@ -569,6 +569,7 @@ const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agos
 let curUser=null,curUserDoc=null,smsCode=null,smsExpiry=null,smsTimer=null;
 let crRecords=[],crMesAno=null;
 let selGrupoId=null,selSubgrupoId=null,editId=null;
+let doing2FA=false;
 
 // ── THEME ─────────────────────────────────────────────
 function toggleTheme(){
@@ -612,6 +613,7 @@ async function doLogin(){
     if(!snap.exists){err.textContent='Usuário não configurado.';await auth.signOut();btn.textContent='Entrar';btn.disabled=false;return;}
     curUserDoc=snap.data();
     if(!curUserDoc.telefone){return;}
+    doing2FA=true;
     await auth.signOut();
     smsCode=String(Math.floor(100000+Math.random()*900000));
     smsExpiry=Date.now()+5*60*1000;
@@ -632,6 +634,7 @@ async function verifySMS(){
   if(code!==smsCode){err.textContent='Código incorreto.';return;}
   btn.textContent='Verificando...';btn.disabled=true;
   clearInterval(smsTimer);
+  doing2FA=false;
   try{
     await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
     await auth.signInWithEmailAndPassword(document.getElementById('l-email').value.trim(),document.getElementById('l-pass').value);
@@ -648,7 +651,7 @@ async function resendSMS(){
 }
 
 function cancelSMS(){
-  clearInterval(smsTimer);smsCode=null;curUserDoc=null;
+  clearInterval(smsTimer);smsCode=null;curUserDoc=null;doing2FA=false;
   [0,1,2,3,4,5].forEach(i=>document.getElementById('sms'+i).value='');
   showScreen('login');
 }
@@ -678,6 +681,7 @@ async function enviarSMS(numero,msg){
 function doLogout(){auth.signOut();}
 
 auth.onAuthStateChanged(async user=>{
+  if(doing2FA) return;
   if(user){
     curUser=user;
     const snap=await db.collection('usuarios').doc(user.uid).get();
