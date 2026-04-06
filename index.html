@@ -333,7 +333,8 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
     <div id="page-clientes" class="page-content" style="display:none">
       <div class="page-header">
         <span class="page-title">Clientes</span>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="cli-search" class="form-input" placeholder="Buscar por nome ou CNPJ..." style="width:260px;padding:6px 10px;font-size:12px" oninput="filterClientes()">
           <button class="btn" onclick="document.getElementById('cli-file').click()">Importar XLS</button>
           <input type="file" id="cli-file" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleClienteFile(this.files[0])">
           <button class="btn btn-primary" onclick="openClienteModal()">+ Novo cliente</button>
@@ -342,8 +343,9 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <div class="tbl-section">
         <table>
           <thead><tr>
-            <th style="width:52px">Cód.</th><th>Nome</th>
-            <th style="width:152px">CNPJ / CPF</th>
+            <th style="width:52px">Cód.</th>
+            <th style="cursor:pointer;user-select:none" onclick="sortClientes('nome')" id="th-cli-nome">Nome <span id="sort-cli-nome">↕</span></th>
+            <th style="width:152px;cursor:pointer;user-select:none" onclick="sortClientes('cnpj')" id="th-cli-cnpj">CNPJ / CPF <span id="sort-cli-cnpj">↕</span></th>
             <th style="width:140px">Telefone</th>
             <th style="width:110px;text-align:right">Honorários</th>
             <th style="width:80px;text-align:center">Dia Venc.</th>
@@ -360,6 +362,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <div class="page-header">
         <span class="page-title">Contas a Receber</span>
         <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="cr-search" class="form-input" placeholder="Buscar por nome ou CNPJ..." style="width:240px;padding:6px 10px;font-size:12px" oninput="filterCR()">
           <select class="sel" id="cr-mes" onchange="loadCR()"></select>
           <select class="sel" id="cr-ano" onchange="loadCR()"></select>
           <button class="btn" onclick="openModal('modal-upload')">Importar</button>
@@ -375,8 +378,9 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <div class="tbl-section">
         <table>
           <thead><tr>
-            <th style="width:50px">Cód.</th><th>Nome</th>
-            <th style="width:148px">CNPJ / CPF</th>
+            <th style="width:50px">Cód.</th>
+            <th style="cursor:pointer;user-select:none" onclick="sortCR('nome')">Nome <span id="sort-cr-nome">↕</span></th>
+            <th style="width:148px;cursor:pointer;user-select:none" onclick="sortCR('cnpj')">CNPJ / CPF <span id="sort-cr-cnpj">↕</span></th>
             <th style="width:62px">Boleto</th>
             <th style="width:110px;text-align:right">Valor</th>
             <th style="width:34px;text-align:center">Dis</th>
@@ -759,7 +763,62 @@ async function loadDashboard(){
 }
 
 // ── CLIENTES ──────────────────────────────────────────
-function fmtTel(t){
+let cliData=[];
+let cliSortField='';let cliSortDir=1;
+
+function sortClientes(field){
+  if(cliSortField===field)cliSortDir*=-1;
+  else{cliSortField=field;cliSortDir=1;}
+  ['nome','cnpj'].forEach(f=>{
+    const el=document.getElementById('sort-cli-'+f);
+    if(el)el.textContent=f===field?(cliSortDir===1?'↑':'↓'):'↕';
+  });
+  renderClientes();
+}
+
+function filterClientes(){renderClientes();}
+
+function renderClientes(){
+  const tb=document.getElementById('tb-clientes');
+  const q=(document.getElementById('cli-search')?.value||'').toLowerCase();
+  let data=[...cliData];
+  if(q)data=data.filter(r=>(r.nome||'').toLowerCase().includes(q)||(r.cnpj||'').toLowerCase().includes(q));
+  if(cliSortField){
+    data.sort((a,b)=>{
+      const va=String(a[cliSortField]||'').toLowerCase();
+      const vb=String(b[cliSortField]||'').toLowerCase();
+      if(cliSortField==='cnpj'){
+        const na=va.replace(/\D/g,'');const nb=vb.replace(/\D/g,'');
+        return cliSortDir*(na>nb?1:na<nb?-1:0);
+      }
+      return cliSortDir*va.localeCompare(vb,'pt-BR');
+    });
+  }
+  if(!data.length){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum resultado</td></tr>';return;}
+  tb.innerHTML='';
+  data.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-mono">${r.cod||''}</td><td>${r.nome||''}</td><td class="td-dim">${r.cnpj||''}</td><td style="font-family:var(--mono);font-size:12px;white-space:pre">${fmtTel(r.telefone)}</td><td class="td-r td-mono" style="white-space:nowrap">${r.honorarios?fmtValor(r.honorarios):''}</td><td class="td-c td-mono">${r.dia_venc||''}</td><td class="td-dim">${r.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${r._id}')">Editar</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ── CR SORT/FILTER ─────────────────────────────────────
+let crSortField='';let crSortDir=1;
+
+function sortCR(field){
+  if(crSortField===field)crSortDir*=-1;
+  else{crSortField=field;crSortDir=1;}
+  ['nome','cnpj'].forEach(f=>{
+    const el=document.getElementById('sort-cr-'+f);
+    if(el)el.textContent=f===field?(crSortDir===1?'↑':'↓'):'↕';
+  });
+  renderCR();
+}
+
+function filterCR(){renderCR();}
+
+
   if(!t) return '';
   const digits = t.replace(/\D/g,'');
   if(digits.length < 10) return t;
@@ -783,13 +842,9 @@ async function loadClientes(){
   try{
     const snap=await db.collection('clientes').orderBy('cod').get();
     if(snap.empty){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
-    tb.innerHTML='';
-    snap.forEach(doc=>{
-      const c=doc.data(),id=doc.id;
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td class="td-mono">${c.cod||''}</td><td>${c.nome||''}</td><td class="td-dim">${c.cnpj||''}</td><td style="font-family:var(--mono);font-size:12px;white-space:pre">${fmtTel(c.telefone)}</td><td class="td-r td-mono" style="white-space:nowrap">${c.honorarios?fmtValor(c.honorarios):''}</td><td class="td-c td-mono">${c.dia_venc||''}</td><td class="td-dim">${c.email||''}</td><td><button class="btn btn-sm" onclick="editCliente('${id}')">Editar</button></td>`;
-      tb.appendChild(tr);
-    });
+    cliData=[];
+    snap.forEach(doc=>cliData.push({...doc.data(),_id:doc.id}));
+    renderClientes();
   }catch(e){tb.innerHTML='<tr><td colspan="8" class="empty">Erro ao carregar</td></tr>';}
 }
 
@@ -875,8 +930,22 @@ async function loadCR(){
 
 function renderCR(){
   const tb=document.getElementById('tb-contas');tb.innerHTML='';
-  crRecords.forEach((r,i)=>{
-    const paid=r.pgto!=='';
+  const q=(document.getElementById('cr-search')?.value||'').toLowerCase();
+  let data=crRecords.map((r,i)=>({...r,_i:i}));
+  if(q)data=data.filter(r=>(r.nome||'').toLowerCase().includes(q)||(r.cnpj||'').toLowerCase().includes(q));
+  if(crSortField){
+    data.sort((a,b)=>{
+      const va=String(a[crSortField]||'').toLowerCase();
+      const vb=String(b[crSortField]||'').toLowerCase();
+      if(crSortField==='cnpj'){
+        const na=va.replace(/\D/g,'');const nb=vb.replace(/\D/g,'');
+        return crSortDir*(na>nb?1:na<nb?-1:0);
+      }
+      return crSortDir*va.localeCompare(vb,'pt-BR');
+    });
+  }
+  data.forEach(r=>{
+    const i=r._i;const paid=r.pgto!=='';
     const tr=document.createElement('tr');tr.className=paid?'tr-paid':'';
     tr.innerHTML=`<td class="td-mono">${r.cod}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${r.nome}</td><td class="td-dim">${r.cnpj}</td><td class="td-mono">${r.boleto}</td><td class="td-r td-mono" style="white-space:nowrap">${num(r.valor)}</td><td class="td-c td-mono">${r.dis}</td><td class="td-mono">${r.vencimento}</td><td class="td-c"><input class="pgto-in${paid?' ok':''}" type="text" value="${r.pgto}" placeholder="—" maxlength="2" data-i="${i}" oninput="onPgto(this)"></td><td class="td-r ${paid?'saldo-paid':'saldo-open'}" id="crsl-${i}" style="white-space:nowrap">${num(r.saldo)}</td><td class="td-c"><span class="badge ${paid?'b-paid':'b-open'}" id="crbg-${i}">${paid?'Pago':'Aberto'}</span></td>`;
     tb.appendChild(tr);
