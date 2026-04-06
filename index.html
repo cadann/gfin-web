@@ -818,7 +818,7 @@ function sortCR(field){
 
 function filterCR(){renderCR();}
 
-
+function fmtTel(t){
   if(!t) return '';
   const digits = t.replace(/\D/g,'');
   if(digits.length < 10) return t;
