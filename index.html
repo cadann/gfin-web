@@ -238,7 +238,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
 <body class="light">
 
 <!-- AUTH: LOGIN -->
-<div id="v-login" class="auth-wrap">
+<div id="v-login" class="auth-wrap" style="display:none">
   <div class="auth-card">
     <div class="auth-logo">GFin</div>
     <div class="auth-sub">Careli Assessoria Contábil</div>
@@ -684,18 +684,19 @@ auth.onAuthStateChanged(async user=>{
   if(doing2FA) return;
   if(user){
     curUser=user;
-    const snap=await db.collection('usuarios').doc(user.uid).get();
-    curUserDoc=snap.exists?snap.data():{};
-    document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
-    document.getElementById('sb-email').textContent=user.email;
-    if(curUserDoc.admin)document.getElementById('nav-usuarios').style.display='';
+    try{
+      const snap=await db.collection('usuarios').doc(user.uid).get();
+      curUserDoc=snap.exists?snap.data():{};
+      document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
+      document.getElementById('sb-email').textContent=user.email;
+      if(curUserDoc.admin)document.getElementById('nav-usuarios').style.display='';
+    }catch(e){console.error(e);}
     clearInterval(smsTimer);
     showScreen('app');
     populatePeriods();
     loadDashboard();loadClientes();loadCR();loadGrupos();
   }else{
     curUser=null;
-    if(document.getElementById('v-sms').style.display==='')return;
     showScreen('login');
   }
 });
