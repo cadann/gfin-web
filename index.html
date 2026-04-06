@@ -729,6 +729,7 @@ function getMesAno(ms,as){return{mes:parseInt(document.getElementById(ms).value)
 
 // ── DASHBOARD ─────────────────────────────────────────
 async function loadDashboard(){
+  if(!curUser) return;
   document.getElementById('d-load').style.display='';
   const{mes,ano}=getMesAno('dash-mes','dash-ano');
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
@@ -846,6 +847,7 @@ function handleClienteFile(file){
 
 // ── CONTAS A RECEBER ──────────────────────────────────
 async function loadCR(){
+  if(!curUser) return;
   const{mes,ano}=getMesAno('cr-mes','cr-ano');
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;crMesAno=ma;
   const tb=document.getElementById('tb-contas');
