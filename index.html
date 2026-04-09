@@ -290,6 +290,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <button class="sb-item" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
       <div class="sb-section-label">Admin</div>
       <button class="sb-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)"><div class="sb-dot"></div>Usuários</button>
+      <button class="sb-item" id="nav-config" style="display:none" onclick="goPage('config',this)"><div class="sb-dot"></div>Configurações</button>
     </nav>
     <div class="sb-footer">
       <div class="sb-user-name" id="sb-nome"></div>
@@ -453,6 +454,83 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
           <tbody id="tb-usuarios"><tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div id="page-config" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Configurações</span>
+        <button class="btn btn-primary" onclick="saveConfig()">Salvar Configurações</button>
+      </div>
+
+      <!-- Assinador -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Assinador Digital</span></div>
+        <div style="padding:18px">
+          <div class="form-row"><label class="form-label">URL do Serviço</label><input class="form-input" id="cfg-url" placeholder="https://assinador.saf.net.br"></div>
+        </div>
+      </div>
+
+      <!-- Contador -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Contador</span></div>
+        <div style="padding:18px">
+          <div class="form-2">
+            <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="cfg-cont-nome" placeholder="Nome completo ou razão social"></div>
+            <div class="form-row"><label class="form-label">CNPJ</label><input class="form-input" id="cfg-cont-cnpj" placeholder="XX.XXX.XXX/XXXX-XX"></div>
+          </div>
+          <div class="form-2">
+            <div class="form-row"><label class="form-label">Nº CRC-UF</label><input class="form-input" id="cfg-cont-crc" placeholder="CRC DF-000.000/O-0"></div>
+            <div class="form-row"><label class="form-label">Senha do Certificado</label>
+              <div style="display:flex;gap:6px">
+                <input class="form-input" id="cfg-cont-senha" type="password" placeholder="Senha do .pfx do contador" style="flex:1">
+                <button class="btn btn-sm" onclick="toggleSenha('cfg-cont-senha',this)">👁</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gmail -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Gmail SMTP</span></div>
+        <div style="padding:18px">
+          <div class="form-2">
+            <div class="form-row"><label class="form-label">E-mail</label><input class="form-input" id="cfg-gmail-email" type="email" placeholder="email@gmail.com"></div>
+            <div class="form-row"><label class="form-label">Senha de App</label>
+              <div style="display:flex;gap:6px">
+                <input class="form-input" id="cfg-gmail-senha" type="password" placeholder="xxxx xxxx xxxx xxxx" style="flex:1">
+                <button class="btn btn-sm" onclick="toggleSenha('cfg-gmail-senha',this)">👁</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Z-API -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Z-API (WhatsApp)</span></div>
+        <div style="padding:18px">
+          <div class="form-2">
+            <div class="form-row"><label class="form-label">Instance ID</label><input class="form-input" id="cfg-zapi-instance" placeholder="ID da instância"></div>
+            <div class="form-row"><label class="form-label">Token</label>
+              <div style="display:flex;gap:6px">
+                <input class="form-input" id="cfg-zapi-token" type="password" placeholder="Token da instância" style="flex:1">
+                <button class="btn btn-sm" onclick="toggleSenha('cfg-zapi-token',this)">👁</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-row"><label class="form-label">Client Token</label>
+            <div style="display:flex;gap:6px">
+              <input class="form-input" id="cfg-zapi-client" type="password" placeholder="Token de segurança da conta" style="flex:1">
+              <button class="btn btn-sm" onclick="toggleSenha('cfg-zapi-client',this)">👁</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="cfg-msg" style="font-size:12px;color:var(--green);margin-top:8px;display:none">✓ Configurações salvas com sucesso.</div>
+      <div id="cfg-err" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>
     </div>
   </div>
 </div>
@@ -697,7 +775,7 @@ auth.onAuthStateChanged(async user=>{
       curUserDoc=snap.exists?snap.data():{};
       document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
       document.getElementById('sb-email').textContent=user.email;
-      if(curUserDoc.admin)document.getElementById('nav-usuarios').style.display='';
+      if(curUserDoc.admin){document.getElementById('nav-usuarios').style.display='';document.getElementById('nav-config').style.display='';}
     }catch(e){console.error(e);}
     clearInterval(smsTimer);
     showScreen('app');
@@ -721,13 +799,14 @@ function goPage(name,btn){
   document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
   document.getElementById('page-'+name).style.display='';
   btn.classList.add('active');btn.querySelector('.sb-dot')?.classList.add('active');
-  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários'};
+  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='dashboard')loadDashboard();
   if(name==='clientes')loadClientes();
   if(name==='contas')loadCR();
   if(name==='despesas')loadGrupos();
   if(name==='usuarios')loadUsuarios();
+  if(name==='config')loadConfig();
 }
 
 function openModal(id){document.getElementById(id).style.display='flex';}
@@ -1259,6 +1338,95 @@ async function saveUsuario(){
     await db.collection('usuarios').doc(data.localId).set({nome,email,telefone:tel,admin});
     closeModal('modal-usuario');loadUsuarios();
   }catch(e){alert('Erro: '+e.message);}
+}
+
+// ── CONFIGURAÇÕES ─────────────────────────────────────
+function toggleSenha(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function loadConfig() {
+  try {
+    // Carrega do Firebase
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    const d = snap.exists ? snap.data() : {};
+    document.getElementById('cfg-url').value = d.url_servico || '';
+    document.getElementById('cfg-gmail-email').value = d.gmail_email || '';
+    document.getElementById('cfg-gmail-senha').value = d.gmail_senha_app || '';
+    document.getElementById('cfg-zapi-instance').value = d.zapi_instance || '';
+    document.getElementById('cfg-zapi-token').value = d.zapi_token || '';
+    document.getElementById('cfg-zapi-client').value = d.zapi_client_token || '';
+
+    // Carrega dados do contador
+    const snapC = await db.collection('contador').doc('principal').get();
+    const c = snapC.exists ? snapC.data() : {};
+    document.getElementById('cfg-cont-nome').value = c.nome || '';
+    document.getElementById('cfg-cont-cnpj').value = c.cnpj || '';
+    document.getElementById('cfg-cont-crc').value = c.crc_uf || '';
+    document.getElementById('cfg-cont-senha').value = c.senha_cert || '';
+  } catch(e) { console.error('loadConfig:', e); }
+}
+
+async function saveConfig() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const gmailEmail = document.getElementById('cfg-gmail-email').value.trim();
+  const gmailSenha = document.getElementById('cfg-gmail-senha').value;
+  const zapiInstance = document.getElementById('cfg-zapi-instance').value.trim();
+  const zapiToken = document.getElementById('cfg-zapi-token').value;
+  const zapiClient = document.getElementById('cfg-zapi-client').value;
+  const contNome = document.getElementById('cfg-cont-nome').value.trim();
+  const contCnpj = document.getElementById('cfg-cont-cnpj').value.trim();
+  const contCrc = document.getElementById('cfg-cont-crc').value.trim();
+  const contSenha = document.getElementById('cfg-cont-senha').value;
+
+  const msgEl = document.getElementById('cfg-msg');
+  const errEl = document.getElementById('cfg-err');
+  msgEl.style.display = 'none';
+  errEl.style.display = 'none';
+
+  try {
+    // Salva no Firebase
+    await db.collection('config_assinador').doc('principal').set({
+      url_servico: url,
+      gmail_email: gmailEmail,
+      gmail_senha_app: gmailSenha,
+      zapi_instance: zapiInstance,
+      zapi_token: zapiToken,
+      zapi_client_token: zapiClient
+    });
+
+    await db.collection('contador').doc('principal').set({
+      nome: contNome,
+      cnpj: contCnpj,
+      crc_uf: contCrc,
+      senha_cert: contSenha
+    });
+
+    // Envia para o assinador
+    if (url) {
+      const resp = await fetch(url + '/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gmail_email: gmailEmail,
+          gmail_senha_app: gmailSenha,
+          zapi_instance: zapiInstance,
+          zapi_token: zapiToken,
+          zapi_client_token: zapiClient,
+          senha_contador: contSenha
+        })
+      });
+      if (!resp.ok) throw new Error('Erro ao enviar para o assinador: ' + resp.status);
+    }
+
+    msgEl.style.display = '';
+    setTimeout(() => msgEl.style.display = 'none', 3000);
+  } catch(e) {
+    errEl.textContent = 'Erro: ' + e.message;
+    errEl.style.display = '';
+  }
 }
 </script>
 </body>
