@@ -284,11 +284,12 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
     </div>
     <nav class="sb-nav">
       <div class="sb-section-label">Principal</div>
-      <button class="sb-item active" onclick="goPage('dashboard',this)"><div class="sb-dot active"></div>Dashboard</button>
-      <button class="sb-item" onclick="goPage('clientes',this)"><div class="sb-dot"></div>Clientes</button>
-      <button class="sb-item" onclick="goPage('contas',this)"><div class="sb-dot"></div>Contas a Receber</button>
-      <button class="sb-item" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
-      <div class="sb-section-label">Admin</div>
+      <button class="sb-item" id="nav-dashboard" style="display:none" onclick="goPage('dashboard',this)"><div class="sb-dot"></div>Dashboard</button>
+      <button class="sb-item active" id="nav-clientes" onclick="goPage('clientes',this)"><div class="sb-dot active"></div>Clientes</button>
+      <button class="sb-item" id="nav-contas" style="display:none" onclick="goPage('contas',this)"><div class="sb-dot"></div>Contas a Receber</button>
+      <button class="sb-item" id="nav-despesas" style="display:none" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
+      <button class="sb-item" id="nav-assinatura" onclick="goPage('assinatura',this)"><div class="sb-dot"></div>Assinatura</button>
+      <div class="sb-section-label" id="label-admin" style="display:none">Admin</div>
       <button class="sb-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)"><div class="sb-dot"></div>Usuários</button>
       <button class="sb-item" id="nav-config" style="display:none" onclick="goPage('config',this)"><div class="sb-dot"></div>Configurações</button>
     </nav>
@@ -312,7 +313,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
     </div>
 
     <!-- DASHBOARD -->
-    <div id="page-dashboard" class="page-content">
+    <div id="page-dashboard" class="page-content" style="display:none">
       <div class="page-header">
         <span class="page-title">Dashboard</span>
         <div style="display:flex;gap:8px">
@@ -331,7 +332,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
     </div>
 
     <!-- CLIENTES -->
-    <div id="page-clientes" class="page-content" style="display:none">
+    <div id="page-clientes" class="page-content">
       <div class="page-header">
         <span class="page-title">Clientes</span>
         <div style="display:flex;gap:8px;align-items:center">
@@ -456,6 +457,103 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       </div>
     </div>
 
+
+    <!-- ASSINATURA -->
+    <div id="page-assinatura" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Assinatura Digital</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="ass-status-badge" style="display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border-radius:99px;background:#dcfce7;color:#166534">
+            <span style="font-size:8px">●</span><span id="ass-status-txt">Verificando...</span>
+          </div>
+          <button class="btn btn-sm" onclick="loadAssinatura()">Atualizar</button>
+          <button class="btn btn-primary" onclick="processarAgora()">Processar Agora</button>
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Enviar para Assinatura</span></div>
+        <div style="padding:18px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="file" id="ass-upload-input" accept=".pdf" multiple style="display:none" onchange="uploadPDFs(this.files)">
+            <button class="btn btn-primary" onclick="document.getElementById('ass-upload-input').click()">Selecionar PDFs</button>
+            <span id="ass-upload-msg" style="font-size:12px;color:var(--green)"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pastas -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        <!-- C:\Assinar -->
+        <div class="tbl-section">
+          <div class="tbl-bar">
+            <span class="tbl-bar-title">Aguardando Assinatura</span>
+            <button class="btn btn-sm" onclick="loadPasta('assinar')">↻</button>
+          </div>
+          <div id="pasta-assinar-list" style="max-height:220px;overflow-y:auto">
+            <div class="loading-row"><div class="spin"></div></div>
+          </div>
+        </div>
+
+        <!-- C:\Assinados -->
+        <div class="tbl-section">
+          <div class="tbl-bar">
+            <span class="tbl-bar-title">Assinados</span>
+            <button class="btn btn-sm" onclick="loadPasta('assinados')">↻</button>
+          </div>
+          <div id="pasta-assinados-list" style="max-height:220px;overflow-y:auto">
+            <div class="loading-row"><div class="spin"></div></div>
+          </div>
+        </div>
+
+        <!-- C:\Originais -->
+        <div class="tbl-section">
+          <div class="tbl-bar">
+            <span class="tbl-bar-title">Originais</span>
+            <button class="btn btn-sm" onclick="loadPasta('originais')">↻</button>
+          </div>
+          <div id="pasta-originais-list" style="max-height:220px;overflow-y:auto">
+            <div class="loading-row"><div class="spin"></div></div>
+          </div>
+        </div>
+
+        <!-- C:\Assinar\Erros -->
+        <div class="tbl-section">
+          <div class="tbl-bar">
+            <span class="tbl-bar-title">Erros</span>
+            <button class="btn btn-sm" onclick="loadPasta('erros')">↻</button>
+          </div>
+          <div id="pasta-erros-list" style="max-height:220px;overflow-y:auto">
+            <div class="loading-row"><div class="spin"></div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Mover -->
+      <div id="modal-mover-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+        <div class="modal" style="width:340px">
+          <div class="modal-title">Mover Arquivo</div>
+          <div style="font-size:13px;margin-bottom:12px" id="mover-nome-txt"></div>
+          <div class="form-row">
+            <label class="form-label">Mover para</label>
+            <select class="sel" id="mover-destino" style="width:100%;padding:8px 10px">
+              <option value="assinar">C:\Assinar</option>
+              <option value="assinados">C:\Assinados</option>
+              <option value="originais">C:\Originais</option>
+              <option value="erros">C:\Assinar\Erros</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button class="btn" onclick="document.getElementById('modal-mover-bg').style.display='none'">Cancelar</button>
+            <button class="btn btn-primary" onclick="confirmarMover()">Mover</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
     <!-- CONFIGURAÇÕES -->
     <div id="page-config" class="page-content" style="display:none">
       <div class="page-header">
@@ -775,12 +873,22 @@ auth.onAuthStateChanged(async user=>{
       curUserDoc=snap.exists?snap.data():{};
       document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
       document.getElementById('sb-email').textContent=user.email;
-      if(curUserDoc.admin){document.getElementById('nav-usuarios').style.display='';document.getElementById('nav-config').style.display='';}
+      if(curUserDoc.admin){
+        // Admin vê tudo
+        ['nav-dashboard','nav-contas','nav-despesas','nav-usuarios','nav-config','label-admin'].forEach(id=>{
+          const el=document.getElementById(id);if(el)el.style.display='';
+        });
+        // Inicia na dashboard para admin
+        document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
+        document.getElementById('nav-dashboard').classList.add('active');
+        document.getElementById('nav-dashboard').querySelector('.sb-dot').classList.add('active');
+      }
     }catch(e){console.error(e);}
     clearInterval(smsTimer);
     showScreen('app');
     populatePeriods();
-    loadDashboard();loadClientes();loadCR();loadGrupos();
+    if(curUserDoc.admin){loadDashboard();loadClientes();loadCR();loadGrupos();}
+    else{loadClientes();}
   }else{
     curUser=null;
     showScreen('login');
@@ -799,7 +907,7 @@ function goPage(name,btn){
   document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
   document.getElementById('page-'+name).style.display='';
   btn.classList.add('active');btn.querySelector('.sb-dot')?.classList.add('active');
-  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações'};
+  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações',assinatura:'Assinatura'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='dashboard')loadDashboard();
   if(name==='clientes')loadClientes();
@@ -807,6 +915,7 @@ function goPage(name,btn){
   if(name==='despesas')loadGrupos();
   if(name==='usuarios')loadUsuarios();
   if(name==='config')loadConfig();
+  if(name==='assinatura')loadAssinatura();
 }
 
 function openModal(id){document.getElementById(id).style.display='flex';}
@@ -1340,6 +1449,185 @@ async function saveUsuario(){
   }catch(e){alert('Erro: '+e.message);}
 }
 
+
+// ── ASSINATURA ────────────────────────────────────────
+let assinadorUrl = 'https://assinador.saf.net.br';
+let moverArquivoAtual = null;
+let moverPastaAtual = null;
+
+async function getAssinadorUrl() {
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists && snap.data().url_servico) assinadorUrl = snap.data().url_servico;
+  } catch(e) {}
+  return assinadorUrl;
+}
+
+async function loadAssinatura() {
+  const url = await getAssinadorUrl();
+  // Status
+  const badge = document.getElementById('ass-status-badge');
+  const txt = document.getElementById('ass-status-txt');
+  try {
+    const r = await fetch(url + '/', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else throw new Error();
+  } catch(e) {
+    badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+    txt.textContent = 'Serviço Offline';
+  }
+  // Pastas
+  loadPasta('assinar');
+  loadPasta('assinados');
+  loadPasta('originais');
+  loadPasta('erros');
+}
+
+async function loadPasta(pasta) {
+  const url = await getAssinadorUrl();
+  const el = document.getElementById('pasta-' + pasta + '-list');
+  el.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(url + '/pasta/' + pasta);
+    const d = await r.json();
+    const arquivos = d.arquivos || [];
+    if (!arquivos.length) { el.innerHTML = '<div class="empty">Nenhum arquivo</div>'; return; }
+    el.innerHTML = '';
+    arquivos.forEach(nome => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      const nomeEl = document.createElement('span');
+      nomeEl.textContent = nome;
+      nomeEl.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px';
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:4px;flex-shrink:0';
+      // Baixar (assinados e originais e erros)
+      if (['assinados','originais','erros'].includes(pasta)) {
+        const btnDl = document.createElement('a');
+        btnDl.href = url + '/assinados-dl/' + pasta + '/' + encodeURIComponent(nome);
+        btnDl.download = nome;
+        btnDl.className = 'btn btn-sm';
+        btnDl.textContent = 'Baixar';
+        btnDl.onclick = async (e) => {
+          e.preventDefault();
+          const u = await getAssinadorUrl();
+          window.open(u + '/download/' + pasta + '/' + encodeURIComponent(nome));
+        };
+        btns.appendChild(btnDl);
+      }
+      // Reenviar (erros)
+      if (pasta === 'erros') {
+        const btnRe = document.createElement('button');
+        btnRe.className = 'btn btn-sm';
+        btnRe.textContent = 'Reenviar';
+        btnRe.onclick = () => moverArquivo(pasta, nome, 'assinar');
+        btns.appendChild(btnRe);
+      }
+      // Remover (assinar)
+      if (pasta === 'assinar') {
+        const btnRm = document.createElement('button');
+        btnRm.className = 'btn btn-sm btn-danger';
+        btnRm.textContent = 'Remover';
+        btnRm.onclick = () => removerArquivo(pasta, nome);
+        btns.appendChild(btnRm);
+      }
+      // Mover para
+      const btnMv = document.createElement('button');
+      btnMv.className = 'btn btn-sm';
+      btnMv.textContent = 'Mover';
+      btnMv.onclick = () => abrirModalMover(pasta, nome);
+      btns.appendChild(btnMv);
+
+      div.appendChild(nomeEl);
+      div.appendChild(btns);
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Erro ao carregar</div>';
+  }
+}
+
+function abrirModalMover(pasta, nome) {
+  moverArquivoAtual = nome;
+  moverPastaAtual = pasta;
+  document.getElementById('mover-nome-txt').textContent = nome;
+  // Remove pasta atual das opções
+  Array.from(document.getElementById('mover-destino').options).forEach(o => {
+    o.disabled = o.value === pasta;
+  });
+  document.getElementById('modal-mover-bg').style.display = 'flex';
+}
+
+async function confirmarMover() {
+  const destino = document.getElementById('mover-destino').value;
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/mover', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({pasta_origem: moverPastaAtual, pasta_destino: destino, arquivo: moverArquivoAtual})
+    });
+    if (r.ok) {
+      document.getElementById('modal-mover-bg').style.display = 'none';
+      loadPasta(moverPastaAtual);
+      loadPasta(destino);
+    } else alert('Erro ao mover arquivo.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function removerArquivo(pasta, nome) {
+  if (!confirm('Remover ' + nome + '?')) return;
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/arquivo/' + pasta + '/' + encodeURIComponent(nome), {method:'DELETE'});
+    if (r.ok) loadPasta(pasta);
+    else alert('Erro ao remover.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function moverArquivo(pastaOrigem, nome, pastaDestino) {
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/mover', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({pasta_origem: pastaOrigem, pasta_destino: pastaDestino, arquivo: nome})
+    });
+    if (r.ok) { loadPasta(pastaOrigem); loadPasta(pastaDestino); }
+    else alert('Erro ao mover.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function uploadPDFs(files) {
+  const url = await getAssinadorUrl();
+  const msg = document.getElementById('ass-upload-msg');
+  msg.textContent = 'Enviando...';
+  let ok = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(url + '/upload', {method:'POST', body: fd});
+      if (r.ok) ok++;
+    } catch(e) {}
+  }
+  msg.textContent = ok + ' arquivo(s) enviado(s).';
+  setTimeout(() => msg.textContent = '', 3000);
+  loadPasta('assinar');
+}
+
+async function processarAgora() {
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/processar-agora', {method:'POST'});
+    if (r.ok) {
+      alert('Processamento iniciado.');
+      setTimeout(() => loadAssinatura(), 3000);
+    }
+  } catch(e) { alert('Erro: ' + e.message); }
+}
 // ── CONFIGURAÇÕES ─────────────────────────────────────
 function toggleSenha(id, btn) {
   const el = document.getElementById(id);
