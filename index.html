@@ -289,6 +289,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <button class="sb-item" id="nav-contas" style="display:none" onclick="goPage('contas',this)"><div class="sb-dot"></div>Contas a Receber</button>
       <button class="sb-item" id="nav-despesas" style="display:none" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
       <button class="sb-item" id="nav-assinatura" onclick="goPage('assinatura',this)"><div class="sb-dot"></div>Assinatura</button>
+      <button class="sb-item" id="nav-certidoes" style="display:none" onclick="goPage('certidoes',this)"><div class="sb-dot"></div>Certidões</button>
       <div class="sb-section-label" id="label-admin" style="display:none">Admin</div>
       <button class="sb-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)"><div class="sb-dot"></div>Usuários</button>
       <button class="sb-item" id="nav-config" style="display:none" onclick="goPage('config',this)"><div class="sb-dot"></div>Configurações</button>
@@ -554,6 +555,73 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       </div>
 
     </div>
+    <!-- CERTIDÕES -->
+    <div id="page-certidoes" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">Certidões</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="cert-status-badge" style="display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border-radius:99px;background:#dcfce7;color:#166534">
+            <span style="font-size:8px">●</span><span id="cert-status-txt">Verificando...</span>
+          </div>
+          <button class="btn btn-sm" onclick="loadCertidoes()">Atualizar</button>
+          <button class="btn btn-primary" onclick="consultarTodosCND()">Consultar CND — Todos</button>
+        </div>
+      </div>
+
+      <!-- Upload bruto -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Enviar Certidão (PDF)</span></div>
+        <div style="padding:18px">
+          <div class="upload-box" id="cert-drop" style="max-width:480px"
+            onclick="document.getElementById('cert-file-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="this.classList.remove('drag');event.preventDefault();uploadCertidoes(event.dataTransfer.files)">
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px">Selecionar PDFs</div>
+            <div style="font-size:12px;color:#000;margin-bottom:12px">O CNPJ é identificado automaticamente no documento</div>
+            <div class="fmt-badges"><span class="fmt-badge">PDF</span></div>
+          </div>
+          <input type="file" id="cert-file-input" accept=".pdf" multiple style="display:none" onchange="uploadCertidoes(this.files)">
+          <div id="cert-upload-msg" style="font-size:12px;color:var(--green);margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- Consulta CND individual -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Consultar CND Federal</span></div>
+        <div style="padding:18px;display:flex;gap:10px;align-items:flex-end">
+          <div style="flex:1">
+            <label class="form-label">Cliente</label>
+            <select class="form-input" id="cert-cli-sel" style="margin-top:4px"><option value="">Selecione...</option></select>
+          </div>
+          <button class="btn btn-primary" onclick="consultarCNDCliente()">Consultar e Enviar</button>
+        </div>
+        <div id="cert-cnd-msg" style="padding:0 18px 14px;font-size:12px;display:none"></div>
+      </div>
+
+      <!-- Lista de clientes com certidões -->
+      <div class="tbl-section">
+        <div class="tbl-bar">
+          <span class="tbl-bar-title">Certidões por Cliente</span>
+          <button class="btn btn-sm" onclick="loadClientesCertidoes()">↻</button>
+        </div>
+        <div id="cert-clientes-list">
+          <div class="loading-row"><div class="spin"></div></div>
+        </div>
+      </div>
+
+      <!-- Painel de arquivos do cliente -->
+      <div id="cert-arquivos-panel" style="display:none;margin-top:16px">
+        <div class="tbl-section">
+          <div class="tbl-bar">
+            <span class="tbl-bar-title" id="cert-arq-titulo">Arquivos</span>
+            <button class="btn btn-sm" onclick="document.getElementById('cert-arquivos-panel').style.display='none'">Fechar</button>
+          </div>
+          <div id="cert-arquivos-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONFIGURAÇÕES -->
     <div id="page-config" class="page-content" style="display:none">
       <div class="page-header">
@@ -566,6 +634,14 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
         <div class="tbl-bar"><span class="tbl-bar-title">Assinador Digital</span></div>
         <div style="padding:18px">
           <div class="form-row"><label class="form-label">URL do Serviço</label><input class="form-input" id="cfg-url" placeholder="https://assinador.saf.net.br"></div>
+        </div>
+      </div>
+
+      <!-- Certidões -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Certidões</span></div>
+        <div style="padding:18px">
+          <div class="form-row"><label class="form-label">URL do Serviço</label><input class="form-input" id="cfg-cert-url" placeholder="https://certidoes.saf.net.br"></div>
         </div>
       </div>
 
@@ -873,9 +949,11 @@ auth.onAuthStateChanged(async user=>{
       curUserDoc=snap.exists?snap.data():{};
       document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
       document.getElementById('sb-email').textContent=user.email;
+      // Certidões visível para todos
+      document.getElementById('nav-certidoes').style.display='';
       if(curUserDoc.admin){
         // Admin vê tudo
-        ['nav-dashboard','nav-contas','nav-despesas','nav-usuarios','nav-config','label-admin'].forEach(id=>{
+        ['nav-dashboard','nav-contas','nav-despesas','nav-assinatura','nav-usuarios','nav-config','label-admin'].forEach(id=>{
           const el=document.getElementById(id);if(el)el.style.display='';
         });
         // Inicia na dashboard para admin
@@ -907,7 +985,7 @@ function goPage(name,btn){
   document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
   document.getElementById('page-'+name).style.display='';
   btn.classList.add('active');btn.querySelector('.sb-dot')?.classList.add('active');
-  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações',assinatura:'Assinatura'};
+  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações',assinatura:'Assinatura',certidoes:'Certidões'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='dashboard')loadDashboard();
   if(name==='clientes')loadClientes();
@@ -916,6 +994,7 @@ function goPage(name,btn){
   if(name==='usuarios')loadUsuarios();
   if(name==='config')loadConfig();
   if(name==='assinatura')loadAssinatura();
+  if(name==='certidoes')loadCertidoes();
 }
 
 function openModal(id){document.getElementById(id).style.display='flex';}
@@ -1628,7 +1707,175 @@ async function processarAgora() {
     }
   } catch(e) { alert('Erro: ' + e.message); }
 }
-// ── CONFIGURAÇÕES ─────────────────────────────────────
+// ── CERTIDÕES ─────────────────────────────────────────
+let certidoesUrl = 'https://certidoes.saf.net.br';
+
+async function getCertidoesUrl() {
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists && snap.data().url_certidoes) certidoesUrl = snap.data().url_certidoes;
+  } catch(e) {}
+  return certidoesUrl;
+}
+
+async function loadCertidoes() {
+  const url = await getCertidoesUrl();
+  const badge = document.getElementById('cert-status-badge');
+  const txt = document.getElementById('cert-status-txt');
+  try {
+    const r = await fetch(url + '/', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else throw new Error();
+  } catch(e) {
+    badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+    txt.textContent = 'Serviço Offline';
+  }
+  loadClientesCertidoes();
+  preencherSelectClientes();
+}
+
+async function preencherSelectClientes() {
+  const sel = document.getElementById('cert-cli-sel');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  try {
+    const snap = await db.collection('clientes').orderBy('nome').get();
+    snap.forEach(doc => {
+      const d = doc.data();
+      const opt = document.createElement('option');
+      opt.value = d.cnpj || '';
+      opt.textContent = d.nome || '';
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadClientesCertidoes() {
+  const url = await getCertidoesUrl();
+  const el = document.getElementById('cert-clientes-list');
+  el.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(url + '/certidoes/todos/clientes');
+    const d = await r.json();
+    const clientes = d.clientes || [];
+    if (!clientes.length) { el.innerHTML = '<div class="empty">Nenhuma certidão encontrada</div>'; return; }
+    el.innerHTML = '';
+    clientes.forEach(c => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      div.innerHTML = `
+        <div style="flex:1">
+          <span style="font-weight:600">${c.cliente}</span>
+          <span style="color:#000;margin-left:10px">${c.total} arquivo(s)</span>
+          <span style="color:#555;margin-left:8px;font-size:11px">Último: ${c.ultimo}</span>
+        </div>
+        <button class="btn btn-sm" onclick="verArquivosCertidoes('${encodeURIComponent(c.cliente)}')">Ver arquivos</button>`;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Erro ao carregar — serviço offline?</div>';
+  }
+}
+
+async function verArquivosCertidoes(clienteEnc) {
+  const cliente = decodeURIComponent(clienteEnc);
+  const url = await getCertidoesUrl();
+  const panel = document.getElementById('cert-arquivos-panel');
+  const list = document.getElementById('cert-arquivos-list');
+  document.getElementById('cert-arq-titulo').textContent = cliente;
+  panel.style.display = '';
+  list.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  panel.scrollIntoView({ behavior: 'smooth' });
+
+  // busca cnpj do cliente para usar no endpoint
+  try {
+    const snap = await db.collection('clientes').where('nome', '==', cliente).limit(1).get();
+    if (snap.empty) { list.innerHTML = '<div class="empty">Cliente não encontrado</div>'; return; }
+    const cnpj = snap.docs[0].data().cnpj || '';
+    const r = await fetch(url + '/certidoes/' + encodeURIComponent(cnpj));
+    const d = await r.json();
+    const arquivos = d.arquivos || [];
+    if (!arquivos.length) { list.innerHTML = '<div class="empty">Nenhum arquivo</div>'; return; }
+    list.innerHTML = '';
+    arquivos.forEach(nome => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      div.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${nome}</span>
+        <button class="btn btn-sm" onclick="downloadCertidao('${encodeURIComponent(cliente)}','${encodeURIComponent(nome)}')">Baixar</button>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Erro ao carregar arquivos</div>';
+  }
+}
+
+async function downloadCertidao(clienteEnc, arquivoEnc) {
+  const url = await getCertidoesUrl();
+  window.open(url + '/download/certidao/' + clienteEnc + '/' + arquivoEnc);
+}
+
+async function uploadCertidoes(files) {
+  const url = await getCertidoesUrl();
+  const msg = document.getElementById('cert-upload-msg');
+  msg.style.color = 'var(--blue)';
+  msg.textContent = 'Enviando...';
+  let ok = 0, aviso = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(url + '/certidoes/upload', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.status === 'ok') ok++;
+      else aviso++;
+    } catch(e) { aviso++; }
+  }
+  msg.style.color = aviso ? 'var(--amber)' : 'var(--green)';
+  msg.textContent = `${ok} enviado(s)` + (aviso ? `, ${aviso} com aviso (CNPJ não identificado ou cliente não cadastrado)` : '');
+  setTimeout(() => msg.textContent = '', 5000);
+  loadClientesCertidoes();
+}
+
+async function consultarCNDCliente() {
+  const cnpj = document.getElementById('cert-cli-sel').value;
+  if (!cnpj) { alert('Selecione um cliente.'); return; }
+  const url = await getCertidoesUrl();
+  const msgEl = document.getElementById('cert-cnd-msg');
+  msgEl.style.display = '';
+  msgEl.style.color = 'var(--blue)';
+  msgEl.textContent = 'Consultando CND na Receita Federal...';
+  try {
+    const r = await fetch(url + '/cnd/consultar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cnpj, enviar: true })
+    });
+    const d = await r.json();
+    if (d.arquivo) {
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = `✓ CND emitida para ${d.cliente} — válida até ${d.data_validade || '—'}. E-mail e WhatsApp enviados.`;
+    } else {
+      msgEl.style.color = 'var(--amber)';
+      msgEl.textContent = `Status ${d.status}: ${d.mensagem || 'Sem resposta da Receita.'}`;
+    }
+    loadClientesCertidoes();
+  } catch(e) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Erro: ' + e.message;
+  }
+}
+
+async function consultarTodosCND() {
+  if (!confirm('Consultar CND de todos os clientes e enviar por e-mail e WhatsApp?')) return;
+  const url = await getCertidoesUrl();
+  try {
+    const r = await fetch(url + '/cnd/consultar-todos', { method: 'POST' });
+    const d = await r.json();
+    alert('Consulta iniciada em background. Acompanhe os logs do servidor.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
 function toggleSenha(id, btn) {
   const el = document.getElementById(id);
   if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
@@ -1641,6 +1888,7 @@ async function loadConfig() {
     const snap = await db.collection('config_assinador').doc('principal').get();
     const d = snap.exists ? snap.data() : {};
     document.getElementById('cfg-url').value = d.url_servico || '';
+    document.getElementById('cfg-cert-url').value = d.url_certidoes || '';
     document.getElementById('cfg-gmail-email').value = d.gmail_email || '';
     document.getElementById('cfg-gmail-senha').value = d.gmail_senha_app || '';
     document.getElementById('cfg-zapi-instance').value = d.zapi_instance || '';
@@ -1659,6 +1907,7 @@ async function loadConfig() {
 
 async function saveConfig() {
   const url = document.getElementById('cfg-url').value.trim();
+  const certUrl = document.getElementById('cfg-cert-url').value.trim();
   const gmailEmail = document.getElementById('cfg-gmail-email').value.trim();
   const gmailSenha = document.getElementById('cfg-gmail-senha').value;
   const zapiInstance = document.getElementById('cfg-zapi-instance').value.trim();
@@ -1678,6 +1927,7 @@ async function saveConfig() {
     // Salva no Firebase
     await db.collection('config_assinador').doc('principal').set({
       url_servico: url,
+      url_certidoes: certUrl,
       gmail_email: gmailEmail,
       gmail_senha_app: gmailSenha,
       zapi_instance: zapiInstance,
