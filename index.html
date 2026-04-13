@@ -957,11 +957,15 @@ auth.onAuthStateChanged(async user=>{
           const el=document.getElementById(id);if(el)el.style.display='';
         });
         // Inicia na dashboard para admin
+        document.querySelectorAll('.page-content').forEach(p=>p.style.display='none');
+        document.getElementById('page-dashboard').style.display='';
         document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
         document.getElementById('nav-dashboard').classList.add('active');
         document.getElementById('nav-dashboard').querySelector('.sb-dot').classList.add('active');
+        document.getElementById('topbar-title').textContent='Dashboard';
       }
     }catch(e){console.error(e);}
+    if(!curUserDoc) curUserDoc={};
     clearInterval(smsTimer);
     showScreen('app');
     populatePeriods();
