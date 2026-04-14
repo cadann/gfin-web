@@ -1976,7 +1976,7 @@ async function saveConfig() {
     await db.collection('saf').doc('principal').set({
       nome: safNome,
       cnpj: safCnpj,
-      senha_cert: safSenha
+      senha_cert: safSenha ? btoa(safSenha) : ''
     });
 
     // Envia para o assinador
