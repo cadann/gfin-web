@@ -665,23 +665,6 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
         </div>
       </div>
 
-      <!-- SAF -->
-      <div class="tbl-section" style="margin-bottom:16px">
-        <div class="tbl-bar"><span class="tbl-bar-title">SAF (Procurações / SITFIS)</span></div>
-        <div style="padding:18px">
-          <div class="form-2">
-            <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="cfg-saf-nome" placeholder="Razão social da SAF"></div>
-            <div class="form-row"><label class="form-label">CNPJ</label><input class="form-input" id="cfg-saf-cnpj" placeholder="XX.XXX.XXX/XXXX-XX"></div>
-          </div>
-          <div class="form-row"><label class="form-label">Senha do Certificado</label>
-            <div style="display:flex;gap:6px">
-              <input class="form-input" id="cfg-saf-senha" type="password" placeholder="Senha do .pfx da SAF" style="flex:1">
-              <button class="btn btn-sm" onclick="toggleSenha('cfg-saf-senha',this)">👁</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Gmail -->
       <div class="tbl-section" style="margin-bottom:16px">
         <div class="tbl-bar"><span class="tbl-bar-title">Gmail SMTP</span></div>
@@ -1791,7 +1774,7 @@ async function loadClientesCertidoes() {
           <span style="color:#000;margin-left:10px">${c.total} arquivo(s)</span>
           <span style="color:#555;margin-left:8px;font-size:11px">Último: ${c.ultimo}</span>
         </div>
-        <button class="btn btn-sm" onclick="verArquivosCertidoes('${encodeURIComponent(c.cliente)}')">Ver arquivos</button>`;
+        <button class="btn btn-sm" onclick="verArquivosCertidoes('${encodeURIComponent(c.cnpj)}','${encodeURIComponent(c.cliente)}')">Ver arquivos</button>`;
       el.appendChild(div);
     });
   } catch(e) {
@@ -1799,7 +1782,8 @@ async function loadClientesCertidoes() {
   }
 }
 
-async function verArquivosCertidoes(clienteEnc) {
+async function verArquivosCertidoes(cnpjEnc, clienteEnc) {
+  const cnpj = decodeURIComponent(cnpjEnc);
   const cliente = decodeURIComponent(clienteEnc);
   const url = await getCertidoesUrl();
   const panel = document.getElementById('cert-arquivos-panel');
@@ -1808,12 +1792,7 @@ async function verArquivosCertidoes(clienteEnc) {
   panel.style.display = '';
   list.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
   panel.scrollIntoView({ behavior: 'smooth' });
-
-  // busca cnpj do cliente para usar no endpoint
   try {
-    const snap = await db.collection('clientes').where('nome', '==', cliente).limit(1).get();
-    if (snap.empty) { list.innerHTML = '<div class="empty">Cliente não encontrado</div>'; return; }
-    const cnpj = snap.docs[0].data().cnpj || '';
     const r = await fetch(url + '/certidoes/' + encodeURIComponent(cnpj));
     const d = await r.json();
     const arquivos = d.arquivos || [];
@@ -1823,7 +1802,7 @@ async function verArquivosCertidoes(clienteEnc) {
       const div = document.createElement('div');
       div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid #bfdbfe;font-size:12px';
       div.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${nome}</span>
-        <button class="btn btn-sm" onclick="downloadCertidao('${encodeURIComponent(cliente)}','${encodeURIComponent(nome)}')">Baixar</button>`;
+        <button class="btn btn-sm" onclick="downloadCertidao('${encodeURIComponent(cnpj)}','${encodeURIComponent(nome)}')">Baixar</button>`;
       list.appendChild(div);
     });
   } catch(e) {
@@ -1831,9 +1810,9 @@ async function verArquivosCertidoes(clienteEnc) {
   }
 }
 
-async function downloadCertidao(clienteEnc, arquivoEnc) {
+async function downloadCertidao(cnpjEnc, arquivoEnc) {
   const url = await getCertidoesUrl();
-  window.open(url + '/download/certidao/' + clienteEnc + '/' + arquivoEnc);
+  window.open(url + '/download/certidao/' + cnpjEnc + '/' + arquivoEnc);
 }
 
 async function uploadCertidoes(files) {
@@ -1923,13 +1902,6 @@ async function loadConfig() {
     document.getElementById('cfg-cont-cnpj').value = c.cnpj || '';
     document.getElementById('cfg-cont-crc').value = c.crc_uf || '';
     document.getElementById('cfg-cont-senha').value = c.senha_cert || '';
-
-    // Carrega dados da SAF
-    const snapS = await db.collection('saf').doc('principal').get();
-    const s = snapS.exists ? snapS.data() : {};
-    document.getElementById('cfg-saf-nome').value = s.nome || '';
-    document.getElementById('cfg-saf-cnpj').value = s.cnpj || '';
-    document.getElementById('cfg-saf-senha').value = s.senha_cert || '';
   } catch(e) { console.error('loadConfig:', e); }
 }
 
@@ -1945,9 +1917,6 @@ async function saveConfig() {
   const contCnpj = document.getElementById('cfg-cont-cnpj').value.trim();
   const contCrc = document.getElementById('cfg-cont-crc').value.trim();
   const contSenha = document.getElementById('cfg-cont-senha').value;
-  const safNome = document.getElementById('cfg-saf-nome').value.trim();
-  const safCnpj = document.getElementById('cfg-saf-cnpj').value.trim();
-  const safSenha = document.getElementById('cfg-saf-senha').value;
 
   const msgEl = document.getElementById('cfg-msg');
   const errEl = document.getElementById('cfg-err');
@@ -1971,12 +1940,6 @@ async function saveConfig() {
       cnpj: contCnpj,
       crc_uf: contCrc,
       senha_cert: contSenha
-    });
-
-    await db.collection('saf').doc('principal').set({
-      nome: safNome,
-      cnpj: safCnpj,
-      senha_cert: safSenha ? btoa(safSenha) : ''
     });
 
     // Envia para o assinador
