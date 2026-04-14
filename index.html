@@ -665,6 +665,23 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
         </div>
       </div>
 
+      <!-- SAF -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">SAF (Procurações / SITFIS)</span></div>
+        <div style="padding:18px">
+          <div class="form-2">
+            <div class="form-row"><label class="form-label">Nome</label><input class="form-input" id="cfg-saf-nome" placeholder="Razão social da SAF"></div>
+            <div class="form-row"><label class="form-label">CNPJ</label><input class="form-input" id="cfg-saf-cnpj" placeholder="XX.XXX.XXX/XXXX-XX"></div>
+          </div>
+          <div class="form-row"><label class="form-label">Senha do Certificado</label>
+            <div style="display:flex;gap:6px">
+              <input class="form-input" id="cfg-saf-senha" type="password" placeholder="Senha do .pfx da SAF" style="flex:1">
+              <button class="btn btn-sm" onclick="toggleSenha('cfg-saf-senha',this)">👁</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Gmail -->
       <div class="tbl-section" style="margin-bottom:16px">
         <div class="tbl-bar"><span class="tbl-bar-title">Gmail SMTP</span></div>
@@ -1906,6 +1923,13 @@ async function loadConfig() {
     document.getElementById('cfg-cont-cnpj').value = c.cnpj || '';
     document.getElementById('cfg-cont-crc').value = c.crc_uf || '';
     document.getElementById('cfg-cont-senha').value = c.senha_cert || '';
+
+    // Carrega dados da SAF
+    const snapS = await db.collection('saf').doc('principal').get();
+    const s = snapS.exists ? snapS.data() : {};
+    document.getElementById('cfg-saf-nome').value = s.nome || '';
+    document.getElementById('cfg-saf-cnpj').value = s.cnpj || '';
+    document.getElementById('cfg-saf-senha').value = s.senha_cert || '';
   } catch(e) { console.error('loadConfig:', e); }
 }
 
@@ -1921,6 +1945,9 @@ async function saveConfig() {
   const contCnpj = document.getElementById('cfg-cont-cnpj').value.trim();
   const contCrc = document.getElementById('cfg-cont-crc').value.trim();
   const contSenha = document.getElementById('cfg-cont-senha').value;
+  const safNome = document.getElementById('cfg-saf-nome').value.trim();
+  const safCnpj = document.getElementById('cfg-saf-cnpj').value.trim();
+  const safSenha = document.getElementById('cfg-saf-senha').value;
 
   const msgEl = document.getElementById('cfg-msg');
   const errEl = document.getElementById('cfg-err');
@@ -1944,6 +1971,12 @@ async function saveConfig() {
       cnpj: contCnpj,
       crc_uf: contCrc,
       senha_cert: contSenha
+    });
+
+    await db.collection('saf').doc('principal').set({
+      nome: safNome,
+      cnpj: safCnpj,
+      senha_cert: safSenha
     });
 
     // Envia para o assinador
