@@ -634,12 +634,6 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
           <button class="btn btn-sm" onclick="loadSicalc()">Atualizar status</button>
         </div>
       </div>
-      <p style="font-size:11px;color:#475569;margin:0 0 8px;line-height:1.45">
-        <strong>Assinador</strong> e <strong>Certidões</strong> ficam “online” aqui porque já existem <strong>DNS + túnel Cloudflare</strong> para esses subdomínios.
-        O serviço <strong>GFinSicalc</strong> no servidor pode estar <strong>Running</strong> e mesmo assim este painel falhar até existir o <strong>mesmo tipo de publicação</strong> para a URL do SICALC (Configurações → SICALC / DARF), por exemplo <code>https://sicalc.saf.net.br</code> → <code>127.0.0.1:8003</code> no túnel.
-        <a href="#" id="sicalc-open-url" target="_blank" rel="noopener" style="color:var(--blue)">Abrir URL do SICALC</a> — se não abrir ou não mostrar JSON, o problema é <strong>rede/DNS/túnel</strong>, não o código do recálculo.
-      </p>
-      <div id="sicalc-ping-detail" style="font-size:11px;color:#64748b;margin:0 0 14px;min-height:1.2em;word-break:break-all"></div>
       <div class="tbl-section" style="margin-bottom:16px">
         <div class="tbl-bar"><span class="tbl-bar-title">Recalcular DARF (PDF)</span></div>
         <div style="padding:18px">
@@ -1942,66 +1936,28 @@ async function getSicalcUrl() {
 
 async function loadSicalc() {
   const url = (await getSicalcUrl() || '').replace(/\/$/, '');
-  const openA = document.getElementById('sicalc-open-url');
-  if (openA) openA.href = url + '/';
   const badge = document.getElementById('sicalc-status-badge');
   const txt = document.getElementById('sicalc-status-txt');
-  const detail = document.getElementById('sicalc-ping-detail');
   if (!badge || !txt) return;
   const rootUrl = url + '/';
-  if (detail) {
-    detail.textContent = 'A testar ' + rootUrl + ' (mesmo critério que Certidões: GET /)…';
-    detail.style.color = '#64748b';
-  }
   const isNetErr = (err) =>
     err && (err.name === 'TypeError' || /fetch|Network|Failed|Load|aborted|AbortError/i.test(String(err.message || err)));
-
   try {
     const r = await fetch(rootUrl, { signal: AbortSignal.timeout(8000), mode: 'cors' });
     if (r.ok) {
       badge.style.background = '#dcfce7'; badge.style.color = '#166534';
       txt.textContent = 'Serviço Online';
-      const pingUrl = url + '/sicalc/ping';
-      if (detail) {
-        try {
-          const rp = await fetch(pingUrl, { signal: AbortSignal.timeout(15000), mode: 'cors' });
-          if (rp.ok) {
-            detail.textContent = 'API público OK. Integração SERPRO+SAF: OK (' + pingUrl + ')';
-            detail.style.color = '#166534';
-          } else {
-            detail.textContent = 'API público OK. Aviso: /sicalc/ping → HTTP ' + rp.status + ' (SERPRO/certificado no servidor).';
-            detail.style.color = '#b45309';
-          }
-        } catch(pe) {
-          detail.textContent = 'API público OK. Aviso ao testar ' + pingUrl + ' — ' + (pe.message || pe);
-          detail.style.color = '#b45309';
-        }
-      }
     } else {
       badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
       txt.textContent = 'Serviço Offline';
-      if (detail) {
-        detail.textContent = rootUrl + ' respondeu HTTP ' + r.status + ' (ver API no servidor ou túnel).';
-        detail.style.color = '#991b1b';
-      }
     }
   } catch(e) {
     if (isNetErr(e)) {
       badge.style.background = '#fef3c7'; badge.style.color = '#92400e';
       txt.textContent = 'URL não alcançável daqui';
-      if (detail) {
-        detail.textContent =
-          'O browser não conseguiu ligar a ' + rootUrl +
-          ' — em geral falta hostname no Cloudflare (como assinador./certidoes.) ou o túnel não expõe a porta 8003. O serviço Windows no PC pode estar Running na mesma.';
-        detail.style.color = '#92400e';
-      }
     } else {
       badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
       txt.textContent = 'Serviço Offline';
-      if (detail) {
-        detail.textContent = 'Erro ao testar ' + rootUrl + ' — ' + (e.message || String(e));
-        detail.style.color = '#991b1b';
-      }
     }
   }
 }
