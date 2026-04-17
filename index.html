@@ -634,6 +634,11 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
           <button class="btn btn-sm" onclick="loadSicalc()">Atualizar status</button>
         </div>
       </div>
+      <p style="font-size:11px;color:#475569;margin:0 0 8px;line-height:1.45">
+        Este painel chama a <strong>URL pública</strong> do SICALC (Configurações → SICALC / DARF), não o <code>127.0.0.1</code> do servidor.
+        Pelo navegador em <code>saf.net.br</code> é preciso hostname do túnel (ex. <code>https://sicalc.saf.net.br</code>) com DNS no Cloudflare e serviço Cloudflared rodando.
+      </p>
+      <div id="sicalc-ping-detail" style="font-size:11px;color:#64748b;margin:0 0 14px;min-height:1.2em;word-break:break-all"></div>
       <div class="tbl-section" style="margin-bottom:16px">
         <div class="tbl-bar"><span class="tbl-bar-title">Recalcular DARF (PDF)</span></div>
         <div style="padding:18px">
@@ -1922,30 +1927,63 @@ async function consultarTodosCND() {
 }
 
 // ── SICALC / DARF ───────────────────────────────────────
-let sicalcUrl = 'https://sicalc.saf.net.br';
-
 async function getSicalcUrl() {
+  const fallback = 'https://sicalc.saf.net.br';
   try {
     const snap = await db.collection('config_assinador').doc('principal').get();
-    if (snap.exists && snap.data().url_sicalc) sicalcUrl = snap.data().url_sicalc;
+    if (snap.exists) {
+      const u = (snap.data().url_sicalc || '').trim().replace(/\/$/, '');
+      if (u) return u;
+    }
   } catch(e) {}
-  return sicalcUrl;
+  return fallback;
 }
 
 async function loadSicalc() {
-  const url = await getSicalcUrl();
+  const url = (await getSicalcUrl() || '').replace(/\/$/, '');
   const badge = document.getElementById('sicalc-status-badge');
   const txt = document.getElementById('sicalc-status-txt');
+  const detail = document.getElementById('sicalc-ping-detail');
   if (!badge || !txt) return;
+  const rootUrl = url + '/';
+  if (detail) {
+    detail.textContent = 'A testar: ' + rootUrl + ' (igual Certidões/Assinatura)…';
+    detail.style.color = '#64748b';
+  }
   try {
-    const r = await fetch(url + '/sicalc/ping', { signal: AbortSignal.timeout(8000) });
+    const r = await fetch(rootUrl, { signal: AbortSignal.timeout(8000), mode: 'cors' });
     if (r.ok) {
       badge.style.background = '#dcfce7'; badge.style.color = '#166534';
       txt.textContent = 'Serviço Online';
-    } else throw new Error();
+      const pingUrl = url + '/sicalc/ping';
+      if (detail) {
+        try {
+          const rp = await fetch(pingUrl, { signal: AbortSignal.timeout(15000), mode: 'cors' });
+          if (rp.ok) {
+            detail.textContent = 'API no ar. Integração SERPRO+SAF: OK (' + pingUrl + ')';
+            detail.style.color = '#166534';
+          } else {
+            detail.textContent = 'API no ar. Aviso: /sicalc/ping retornou HTTP ' + rp.status + ' (ver SERPRO/certificado no servidor).';
+            detail.style.color = '#b45309';
+          }
+        } catch(pe) {
+          detail.textContent = 'API no ar. Aviso: não foi possível concluir ' + pingUrl + ' — ' + (pe.message || pe);
+          detail.style.color = '#b45309';
+        }
+      }
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
   } catch(e) {
     badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
     txt.textContent = 'Serviço Offline';
+    const msg = (e && e.name === 'TypeError' && /fetch|Network|Failed|Load/i.test(String(e.message)))
+      ? 'Falha de rede / DNS / SSL ou bloqueio do browser ao aceder ao host.'
+      : (e.message || String(e));
+    if (detail) {
+      detail.textContent = 'Falha em ' + rootUrl + ' — ' + msg;
+      detail.style.color = '#991b1b';
+    }
   }
 }
 
@@ -1956,7 +1994,6 @@ async function uploadSicalcDarf(files) {
     alert('Apenas PDF.');
     return;
   }
-  const url = await getSicalcUrl();
   const msg = document.getElementById('sicalc-upload-msg');
   const enviar = document.getElementById('sicalc-enviar').checked;
   msg.style.color = 'var(--blue)';
@@ -1964,7 +2001,8 @@ async function uploadSicalcDarf(files) {
   const fd = new FormData();
   fd.append('file', file);
   try {
-    const r = await fetch(url + '/sicalc/recalcular/upload?enviar=' + (enviar ? 'true' : 'false'), {
+    const base = (await getSicalcUrl()).replace(/\/$/, '');
+    const r = await fetch(base + '/sicalc/recalcular/upload?enviar=' + (enviar ? 'true' : 'false'), {
       method: 'POST',
       body: fd
     });
