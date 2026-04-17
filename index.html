@@ -290,6 +290,7 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       <button class="sb-item" id="nav-despesas" style="display:none" onclick="goPage('despesas',this)"><div class="sb-dot"></div>Despesas</button>
       <button class="sb-item" id="nav-assinatura" onclick="goPage('assinatura',this)"><div class="sb-dot"></div>Assinatura</button>
       <button class="sb-item" id="nav-certidoes" style="display:none" onclick="goPage('certidoes',this)"><div class="sb-dot"></div>Certidões</button>
+      <button class="sb-item" id="nav-sicalc" style="display:none" onclick="goPage('sicalc',this)"><div class="sb-dot"></div>SICALC / DARF</button>
       <div class="sb-section-label" id="label-admin" style="display:none">Admin</div>
       <button class="sb-item" id="nav-usuarios" style="display:none" onclick="goPage('usuarios',this)"><div class="sb-dot"></div>Usuários</button>
       <button class="sb-item" id="nav-config" style="display:none" onclick="goPage('config',this)"><div class="sb-dot"></div>Configurações</button>
@@ -622,6 +623,40 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
       </div>
     </div>
 
+    <!-- SICALC / DARF -->
+    <div id="page-sicalc" class="page-content" style="display:none">
+      <div class="page-header">
+        <span class="page-title">SICALC — DARF</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div id="sicalc-status-badge" style="display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border-radius:99px;background:#dcfce7;color:#166534">
+            <span style="font-size:8px">●</span><span id="sicalc-status-txt">Verificando...</span>
+          </div>
+          <button class="btn btn-sm" onclick="loadSicalc()">Atualizar status</button>
+        </div>
+      </div>
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">Recalcular DARF (PDF)</span></div>
+        <div style="padding:18px">
+          <p style="font-size:12px;color:#000;margin:0 0 12px">Envie um PDF de DARF. O sistema identifica o contribuinte, recalcula via SICALC e pode enviar e-mail e WhatsApp ao cliente cadastrado.</p>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:12px;cursor:pointer">
+            <input type="checkbox" id="sicalc-enviar" checked>
+            Enviar e-mail e WhatsApp após gerar (se cliente tiver contatos)
+          </label>
+          <div class="upload-box" id="sicalc-drop" style="max-width:480px"
+            onclick="document.getElementById('sicalc-file-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="this.classList.remove('drag');event.preventDefault();uploadSicalcDarf(event.dataTransfer.files)">
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px">Selecionar PDF (DARF)</div>
+            <div style="font-size:12px;color:#000;margin-bottom:12px">Simples Nacional (DAS) não é aceito — apenas DARF federal.</div>
+            <div class="fmt-badges"><span class="fmt-badge">PDF</span></div>
+          </div>
+          <input type="file" id="sicalc-file-input" accept=".pdf" style="display:none" onchange="uploadSicalcDarf(this.files)">
+          <div id="sicalc-upload-msg" style="font-size:12px;margin-top:10px;white-space:pre-wrap"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONFIGURAÇÕES -->
     <div id="page-config" class="page-content" style="display:none">
       <div class="page-header">
@@ -642,6 +677,14 @@ body.dark .fmt-badge{background:#0f172a;color:#000000}
         <div class="tbl-bar"><span class="tbl-bar-title">Certidões</span></div>
         <div style="padding:18px">
           <div class="form-row"><label class="form-label">URL do Serviço</label><input class="form-input" id="cfg-cert-url" placeholder="https://certidoes.saf.net.br"></div>
+        </div>
+      </div>
+
+      <!-- SICALC / DARF -->
+      <div class="tbl-section" style="margin-bottom:16px">
+        <div class="tbl-bar"><span class="tbl-bar-title">SICALC / DARF</span></div>
+        <div style="padding:18px">
+          <div class="form-row"><label class="form-label">URL do Serviço</label><input class="form-input" id="cfg-sicalc-url" placeholder="https://sicalc.saf.net.br"></div>
         </div>
       </div>
 
@@ -949,8 +992,9 @@ auth.onAuthStateChanged(async user=>{
       curUserDoc=snap.exists?snap.data():{};
       document.getElementById('sb-nome').textContent=curUserDoc.nome||user.email;
       document.getElementById('sb-email').textContent=user.email;
-      // Certidões visível para todos
+      // Certidões e SICALC visíveis para todos
       document.getElementById('nav-certidoes').style.display='';
+      document.getElementById('nav-sicalc').style.display='';
       if(curUserDoc.admin){
         // Admin vê tudo
         ['nav-dashboard','nav-contas','nav-despesas','nav-assinatura','nav-usuarios','nav-config','label-admin'].forEach(id=>{
@@ -989,7 +1033,7 @@ function goPage(name,btn){
   document.querySelectorAll('.sb-item').forEach(b=>{b.classList.remove('active');b.querySelector('.sb-dot')?.classList.remove('active');});
   document.getElementById('page-'+name).style.display='';
   btn.classList.add('active');btn.querySelector('.sb-dot')?.classList.add('active');
-  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações',assinatura:'Assinatura',certidoes:'Certidões'};
+  const titles={dashboard:'Dashboard',clientes:'Clientes',contas:'Contas a Receber',despesas:'Despesas',usuarios:'Usuários',config:'Configurações',assinatura:'Assinatura',certidoes:'Certidões',sicalc:'SICALC — DARF'};
   document.getElementById('topbar-title').textContent=titles[name]||name;
   if(name==='dashboard')loadDashboard();
   if(name==='clientes')loadClientes();
@@ -999,6 +1043,7 @@ function goPage(name,btn){
   if(name==='config')loadConfig();
   if(name==='assinatura')loadAssinatura();
   if(name==='certidoes')loadCertidoes();
+  if(name==='sicalc')loadSicalc();
 }
 
 function openModal(id){document.getElementById(id).style.display='flex';}
@@ -1876,6 +1921,72 @@ async function consultarTodosCND() {
   } catch(e) { alert('Erro: ' + e.message); }
 }
 
+// ── SICALC / DARF ───────────────────────────────────────
+let sicalcUrl = 'https://sicalc.saf.net.br';
+
+async function getSicalcUrl() {
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists && snap.data().url_sicalc) sicalcUrl = snap.data().url_sicalc;
+  } catch(e) {}
+  return sicalcUrl;
+}
+
+async function loadSicalc() {
+  const url = await getSicalcUrl();
+  const badge = document.getElementById('sicalc-status-badge');
+  const txt = document.getElementById('sicalc-status-txt');
+  if (!badge || !txt) return;
+  try {
+    const r = await fetch(url + '/sicalc/ping', { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else throw new Error();
+  } catch(e) {
+    badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+    txt.textContent = 'Serviço Offline';
+  }
+}
+
+async function uploadSicalcDarf(files) {
+  if (!files || !files.length) return;
+  const file = files[0];
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    alert('Apenas PDF.');
+    return;
+  }
+  const url = await getSicalcUrl();
+  const msg = document.getElementById('sicalc-upload-msg');
+  const enviar = document.getElementById('sicalc-enviar').checked;
+  msg.style.color = 'var(--blue)';
+  msg.textContent = 'Processando (pode levar alguns segundos)...';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch(url + '/sicalc/recalcular/upload?enviar=' + (enviar ? 'true' : 'false'), {
+      method: 'POST',
+      body: fd
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const det = d.detail;
+      const errTxt = typeof det === 'string' ? det : (Array.isArray(det) ? det.map(x => x.msg || x).join(' ') : JSON.stringify(d));
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Erro ' + r.status + ': ' + errTxt;
+      return;
+    }
+    const arqs = (d.arquivos || []).join('\n');
+    const warns = (d.mensagens || []).map(m => (m.codigo || '') + ' ' + (m.texto || '')).filter(Boolean).join(' | ');
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✓ ' + (d.status || 'ok') + ' — itens: ' + (d.itens ?? '—') + (arqs ? '\nArquivos:\n' + arqs : '') + (warns ? '\nAvisos: ' + warns : '');
+    loadSicalc();
+  } catch(e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Erro: ' + e.message;
+  }
+}
+
 function toggleSenha(id, btn) {
   const el = document.getElementById(id);
   if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
@@ -1889,6 +2000,7 @@ async function loadConfig() {
     const d = snap.exists ? snap.data() : {};
     document.getElementById('cfg-url').value = d.url_servico || '';
     document.getElementById('cfg-cert-url').value = d.url_certidoes || '';
+    document.getElementById('cfg-sicalc-url').value = d.url_sicalc || '';
     document.getElementById('cfg-gmail-email').value = d.gmail_email || '';
     document.getElementById('cfg-gmail-senha').value = d.gmail_senha_app || '';
     document.getElementById('cfg-zapi-instance').value = d.zapi_instance || '';
@@ -1908,6 +2020,7 @@ async function loadConfig() {
 async function saveConfig() {
   const url = document.getElementById('cfg-url').value.trim();
   const certUrl = document.getElementById('cfg-cert-url').value.trim();
+  const sicalcUrlCfg = document.getElementById('cfg-sicalc-url').value.trim();
   const gmailEmail = document.getElementById('cfg-gmail-email').value.trim();
   const gmailSenha = document.getElementById('cfg-gmail-senha').value;
   const zapiInstance = document.getElementById('cfg-zapi-instance').value.trim();
@@ -1928,6 +2041,7 @@ async function saveConfig() {
     await db.collection('config_assinador').doc('principal').set({
       url_servico: url,
       url_certidoes: certUrl,
+      url_sicalc: sicalcUrlCfg,
       gmail_email: gmailEmail,
       gmail_senha_app: gmailSenha,
       zapi_instance: zapiInstance,
