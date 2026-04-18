@@ -866,14 +866,6 @@ const FB_CFG={apiKey:"AIzaSyCqjRbFboQsJC45ojiaZ2-txOPORia1nKM",authDomain:"gfin-
 firebase.initializeApp(FB_CFG);
 const auth=firebase.auth();
 const db=firebase.firestore();
-const API_URL='https://gfin.saf.net.br';
-async function api(method,path,body){
-  const opts={method,headers:{'Content-Type':'application/json'}};
-  if(body)opts.body=JSON.stringify(body);
-  const r=await fetch(API_URL+path,opts);
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.detail||r.statusText);}
-  return r.json();
-}
 const KING_LOGIN='Cadann';
 const KING_TOKEN='28391fa5470c83f3e7caf697ab4fb010';
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1067,9 +1059,9 @@ async function loadDashboard(){
   const{mes,ano}=getMesAno('dash-mes','dash-ano');
   const ma=`${ano}-${String(mes).padStart(2,'0')}`;
   try{
-    const crData=await api('GET','/contas-receber/'+ma).catch(()=>[]);
+    const crSnap=await db.collection('contas_receber').doc(ma).get();
     let fat=0,rec=0,cnt=0,total=0;
-    if(crData.length){const r=crData;total=r.length;fat=r.reduce((s,x)=>s+(x.valor||0),0);rec=r.reduce((s,x)=>s+(x.pgto?x.valor:0),0);cnt=r.filter(x=>x.pgto).length;}
+    if(crSnap.exists){const r=crSnap.data().registros||[];total=r.length;fat=r.reduce((s,x)=>s+(x.valor||0),0);rec=r.reduce((s,x)=>s+(x.pgto?x.valor:0),0);cnt=r.filter(x=>x.pgto).length;}
     const dSnap=await db.collection('despesas').where('mesAno','==',ma).get();
     let desp=0;dSnap.forEach(d=>desp+=(d.data().valor||0));
     const saldo=rec-desp;
@@ -1164,9 +1156,10 @@ async function loadClientes(){
   const tb=document.getElementById('tb-clientes');
   tb.innerHTML='<tr><td colspan="8" class="loading-row"><div class="spin"></div></td></tr>';
   try{
-    const data=await api('GET','/clientes');
-    if(!data.length){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
-    cliData=data.map(c=>({...c,_id:c.id}));
+    const snap=await db.collection('clientes').orderBy('cod').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="8" class="empty">Nenhum cliente cadastrado</td></tr>';return;}
+    cliData=[];
+    snap.forEach(doc=>cliData.push({...doc.data(),_id:doc.id}));
     renderClientes();
   }catch(e){tb.innerHTML='<tr><td colspan="8" class="empty">Erro ao carregar</td></tr>';}
 }
@@ -1177,34 +1170,32 @@ function openClienteModal(){
   openModal('modal-cliente');
 }
 async function editCliente(id){
-  editId=id;const c=await api('GET','/clientes/'+id);
+  editId=id;const doc=await db.collection('clientes').doc(id).get();const c=doc.data();
   document.getElementById('mc-title').textContent='Editar Cliente';
-  document.getElementById('mc-cod').value=c.cod||'';document.getElementById('mc-cnpj').value=c.cnpj_cpf||'';
+  document.getElementById('mc-cod').value=c.cod||'';document.getElementById('mc-cnpj').value=c.cnpj||'';
   document.getElementById('mc-nome').value=c.nome||'';document.getElementById('mc-tel').value=c.telefone||'';
   document.getElementById('mc-email').value=c.email||'';
   document.getElementById('mc-senha-cert').value=c.senha_cert?atob(c.senha_cert):'';
   document.getElementById('mc-honorarios').value=c.honorarios||'';
-  document.getElementById('mc-dia-venc').value=c.dia_vencimento||'';
+  document.getElementById('mc-dia-venc').value=c.dia_venc||'';
   openModal('modal-cliente');
 }
 async function saveCliente(){
   const senhaCert=document.getElementById('mc-senha-cert').value;
   const data={
-    cod:String(parseInt(document.getElementById('mc-cod').value)||0),
-    cnpj_cpf:document.getElementById('mc-cnpj').value.trim(),
+    cod:parseInt(document.getElementById('mc-cod').value)||0,
+    cnpj:document.getElementById('mc-cnpj').value.trim(),
     nome:document.getElementById('mc-nome').value.trim(),
     telefone:document.getElementById('mc-tel').value.trim(),
     email:document.getElementById('mc-email').value.trim(),
     honorarios:parseFloat(document.getElementById('mc-honorarios').value)||0,
-    dia_vencimento:parseInt(document.getElementById('mc-dia-venc').value)||0,
+    dia_venc:parseInt(document.getElementById('mc-dia-venc').value)||0,
     senha_cert:senhaCert?btoa(senhaCert):''
   };
   if(!data.nome){alert('Nome obrigatório.');return;}
-  try{
-    if(editId)await api('PUT','/clientes/'+editId,data);
-    else await api('POST','/clientes',data);
-    closeModal('modal-cliente');loadClientes();
-  }catch(e){alert('Erro ao salvar: '+e.message);}
+  if(editId)await db.collection('clientes').doc(editId).update(data);
+  else await db.collection('clientes').add(data);
+  closeModal('modal-cliente');loadClientes();
 }
 
 function handleClienteFile(file){
@@ -1221,13 +1212,11 @@ function handleClienteFile(file){
       const clientes=parseXLS(rows);
       if(!clientes.length){alert('Nenhum registro encontrado.');return;}
       let novos=0,atualizados=0;
-      const existentes=await api('GET','/clientes');
-      const mapCod=Object.fromEntries(existentes.map(c=>[String(c.cod),c.id]));
       for(const r of clientes){
         if(!r.cod)continue;
-        const payload={cod:String(r.cod),nome:r.nome,cnpj_cpf:r.cnpj||'',telefone:r.telefone||'',email:'',honorarios:0,dia_vencimento:0};
-        if(mapCod[String(r.cod)]){await api('PUT','/clientes/'+mapCod[String(r.cod)],payload);atualizados++;}
-        else{await api('POST','/clientes',payload);novos++;}
+        const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
+        if(snap.empty){await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});novos++;}
+        else{await snap.docs[0].ref.update({cnpj:r.cnpj||snap.docs[0].data().cnpj||'',telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});atualizados++;}
       }
       alert(`Importação concluída. ${novos} novos, ${atualizados} atualizados.`);
       document.getElementById('cli-file').value='';loadClientes();
@@ -1244,13 +1233,12 @@ async function loadCR(){
   const tb=document.getElementById('tb-contas');
   tb.innerHTML='<tr><td colspan="10" class="loading-row"><div class="spin"></div></td></tr>';
   try{
-    const data=await api('GET','/contas-receber/'+ma);
-    if(!data.length){
+    const snap=await db.collection('contas_receber').doc(ma).get();
+    if(!snap.exists||!(snap.data().registros||[]).length){
       crRecords=[];tb.innerHTML='<tr><td colspan="10" class="empty">Nenhum dado para este período</td></tr>';
-      document.getElementById('cr-cards').style.display='none';document.getElementById('btn-cr-export').style.display='none';
-      return;
+      document.getElementById('cr-cards').style.display='none';document.getElementById('btn-cr-export').style.display='none';return;
     }
-    crRecords=data;
+    crRecords=snap.data().registros||[];
     document.getElementById('cr-cards').style.display='';document.getElementById('btn-cr-export').style.display='';
     renderCR();updateCRCards();
   }catch(e){tb.innerHTML='<tr><td colspan="10" class="empty">Erro ao carregar</td></tr>';}
@@ -1298,14 +1286,7 @@ function updateCRCards(){
 }
 
 let saveTO=null;
-function saveCR(){clearTimeout(saveTO);saveTO=setTimeout(async()=>{
-  try{
-    const updates=crRecords.filter(r=>r.id);
-    for(const r of updates){
-      await api('PUT','/contas-receber/'+r.id,{mes_ano:crMesAno,nome:r.nome,pgto:r.pgto||'',saldo:r.saldo||0,status:r.pgto?'Pago':'Aberto'});
-    }
-  }catch(e){console.error('Erro saveCR:',e);}
-},1500);}
+function saveCR(){clearTimeout(saveTO);saveTO=setTimeout(async()=>{await db.collection('contas_receber').doc(crMesAno).set({registros:crRecords,updatedAt:new Date()});},1500);}
 
 function exportarCR(){
   const h=['Cód.','Nome','CNPJ/CPF','Boleto','Valor','Dis','Vencimento','Pgto','Saldo'];
@@ -1331,7 +1312,7 @@ function handleCRFile(file){
       const v=parsed.find(r=>r.vencimento)?.vencimento;
       if(v){const[d,m,y]=v.split('/');crMesAno=`${y}-${m}`;document.getElementById('cr-mes').value=parseInt(m,10);document.getElementById('cr-ano').value=parseInt(y,10);}
       crRecords=parsed;
-      await api('POST','/contas-receber/'+crMesAno+'/importar',crRecords);
+      await db.collection('contas_receber').doc(crMesAno).set({registros:crRecords,updatedAt:new Date()});
       await syncClientes(parsed);
       closeModal('modal-upload');
       document.getElementById('cr-cards').style.display='';document.getElementById('btn-cr-export').style.display='';
@@ -1368,16 +1349,617 @@ function fmtDate(v){
 }
 
 async function syncClientes(records){
+  for(const r of records){
+    if(!r.cod)continue;
+    const snap=await db.collection('clientes').where('cod','==',r.cod).limit(1).get();
+    if(snap.empty)await db.collection('clientes').add({cod:r.cod,nome:r.nome,cnpj:r.cnpj,telefone:r.telefone||'',email:'',valor:r.valor||0,vencimento:r.vencimento||''});
+    else await snap.docs[0].ref.update({cnpj:r.cnpj||snap.docs[0].data().cnpj||'',telefone:r.telefone||snap.docs[0].data().telefone||'',valor:r.valor||0,vencimento:r.vencimento||''});
+  }
+}
+
+// ── DESPESAS ──────────────────────────────────────────
+async function loadGrupos(){
+  const el=document.getElementById('tree-grupos');
+  el.innerHTML='<div class="loading-row"><div class="spin"></div></div>';
   try{
-    const existentes=await api('GET','/clientes');
-    const mapCod=Object.fromEntries(existentes.map(c=>[String(c.cod),c.id]));
-    for(const r of records){
-      if(!r.cod)continue;
-      const payload={cod:String(r.cod),nome:r.nome,cnpj_cpf:r.cnpj||'',telefone:r.telefone||'',email:'',honorarios:0,dia_vencimento:0};
-      if(mapCod[String(r.cod)])await api('PUT','/clientes/'+mapCod[String(r.cod)],payload);
-      else await api('POST','/clientes',payload);
+    const snap=await db.collection('grupos_despesa').orderBy('nome').get();
+    if(snap.empty){el.innerHTML='<div class="empty">Nenhum grupo</div>';return;}
+    el.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const div=document.createElement('div');
+      div.className='tree-item'+(selGrupoId===id?' selected':'');
+      div.innerHTML=`<span style="flex:1" onclick="selectGrupo('${id}')">${d.nome}</span><div class="tree-item-actions"><button class="btn btn-sm" onclick="editGrupo('${id}','${d.nome.replace(/'/g,"\\'")}')" style="font-size:10px;padding:2px 8px">Editar</button><button class="tree-item-del" onclick="delGrupo('${id}',event)">✕</button></div>`;
+      el.appendChild(div);
+    });
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
+}
+
+function selectGrupo(id){
+  selGrupoId=id;selSubgrupoId=null;
+  document.querySelectorAll('#tree-grupos .tree-item').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.closest('.tree-item')?.classList.add('selected');
+  loadSubgrupos();
+  document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
+  document.getElementById('desp-panel-title').textContent='Selecione um subgrupo';
+  document.getElementById('btn-nova-desp').style.display='none';
+}
+
+async function loadSubgrupos(){
+  if(!selGrupoId){document.getElementById('tree-subgrupos').innerHTML='<div class="empty">Selecione um grupo</div>';return;}
+  const el=document.getElementById('tree-subgrupos');
+  el.innerHTML='<div class="loading-row"><div class="spin"></div></div>';
+  try{
+    const snap=await db.collection('subgrupos_despesa').where('grupoId','==',selGrupoId).orderBy('nome').get();
+    if(snap.empty){el.innerHTML='<div class="empty">Nenhum subgrupo</div>';return;}
+    el.innerHTML='';
+    const clsBadge={Escritório:'cls-esc',Adriano:'cls-adr','Álvaro':'cls-alv'};
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const badge=d.classificacao?`<span class="cls-btn ${clsBadge[d.classificacao]||''}" style="flex:none;padding:2px 8px;font-size:10px;pointer-events:none">${d.classificacao}</span>`:'';
+      const div=document.createElement('div');
+      div.className='tree-item'+(selSubgrupoId===id?' selected':'');
+      div.innerHTML=`<span style="flex:1" onclick="selectSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}')">${d.nome}</span>${badge}<div class="tree-item-actions"><button class="btn btn-sm" onclick="editSubgrupo('${id}','${d.nome.replace(/'/g,"\\'")}','${d.classificacao||''}')" style="font-size:10px;padding:2px 8px">Editar</button><button class="tree-item-del" onclick="delSubgrupo('${id}',event)">✕</button></div>`;
+      el.appendChild(div);
+    });
+  }catch(e){el.innerHTML='<div class="empty">Erro ao carregar</div>';}
+}
+
+function selectSubgrupo(id,nome){
+  selSubgrupoId=id;
+  document.getElementById('desp-panel-title').textContent=nome;
+  document.getElementById('btn-nova-desp').style.display='';
+  loadDespLanc();
+}
+
+async function loadDespLanc(){
+  if(!selSubgrupoId)return;
+  const{mes,ano}=getMesAno('desp-mes','desp-ano');
+  const ma=`${ano}-${String(mes).padStart(2,'0')}`;
+  const tb=document.getElementById('tb-despesas');
+  tb.innerHTML='<tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr>';
+  try{
+    const snap=await db.collection('despesas').where('subgrupoId','==',selSubgrupoId).where('mesAno','==',ma).orderBy('data').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum lançamento</td></tr>';return;}
+    tb.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data(),id=doc.id;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${d.descricao}</td><td class="td-r td-mono">${brl(d.valor)}</td><td class="td-mono">${d.data||''}</td><td class="td-c"><span class="badge ${d.status==='pago'?'b-paid':'b-open'}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="delDesp('${id}')">✕</button></td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="empty">Erro ao carregar</td></tr>';}
+}
+
+function openGrupoModal(){document.getElementById('mg-nome').value='';document.getElementById('mg-title').textContent='Grupo de Despesa';editId=null;openModal('modal-grupo');}
+
+function editGrupo(id,nome){
+  editId=id;
+  document.getElementById('mg-title').textContent='Editar Grupo';
+  document.getElementById('mg-nome').value=nome;
+  openModal('modal-grupo');
+}
+
+async function saveGrupo(){
+  const nome=document.getElementById('mg-nome').value.trim();
+  if(!nome){alert('Digite o nome.');return;}
+  if(editId){await db.collection('grupos_despesa').doc(editId).update({nome});editId=null;}
+  else{
+    // verifica duplicidade
+    const exist=await db.collection('grupos_despesa').where('nome','==',nome).limit(1).get();
+    if(!exist.empty){alert('Já existe um grupo com esse nome.');return;}
+    await db.collection('grupos_despesa').add({nome});
+  }
+  closeModal('modal-grupo');loadGrupos();
+}
+async function delGrupo(id,e){
+  e.stopPropagation();if(!confirm('Excluir grupo e subgrupos?'))return;
+  const sub=await db.collection('subgrupos_despesa').where('grupoId','==',id).get();
+  const batch=db.batch();sub.forEach(d=>batch.delete(d.ref));batch.delete(db.collection('grupos_despesa').doc(id));
+  await batch.commit();selGrupoId=null;selSubgrupoId=null;loadGrupos();
+  document.getElementById('tree-subgrupos').innerHTML='<div class="empty">Selecione um grupo</div>';
+  document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
+}
+
+let selectedClass = '';
+
+function selClass(cls){
+  selectedClass = cls;
+  document.getElementById('cls-esc').className='cls-btn'+(cls==='Escritório'?' cls-esc':'');
+  document.getElementById('cls-adr').className='cls-btn'+(cls==='Adriano'?' cls-adr':'');
+  document.getElementById('cls-alv').className='cls-btn'+(cls==='Álvaro'?' cls-alv':'');
+}
+
+function openSubgrupoModal(){
+  if(!selGrupoId){alert('Selecione um grupo.');return;}
+  editId=null;
+  document.getElementById('msg-title').textContent='Subgrupo de Despesa';
+  document.getElementById('msg-nome').value='';
+  selectedClass='';
+  ['cls-esc','cls-adr','cls-alv'].forEach(id=>document.getElementById(id).className='cls-btn');
+  openModal('modal-subgrupo');
+}
+
+function editSubgrupo(id,nome,cls){
+  editId=id;
+  document.getElementById('msg-title').textContent='Editar Subgrupo';
+  document.getElementById('msg-nome').value=nome;
+  selectedClass=cls;
+  ['cls-esc','cls-adr','cls-alv'].forEach(bid=>document.getElementById(bid).className='cls-btn');
+  if(cls==='Escritório')document.getElementById('cls-esc').classList.add('cls-esc');
+  if(cls==='Adriano')document.getElementById('cls-adr').classList.add('cls-adr');
+  if(cls==='Álvaro')document.getElementById('cls-alv').classList.add('cls-alv');
+  openModal('modal-subgrupo');
+}
+
+async function saveSubgrupo(){
+  const nome=document.getElementById('msg-nome').value.trim();
+  if(!nome){alert('Digite o nome.');return;}
+  if(!selectedClass){alert('Selecione a classificação.');return;}
+  if(editId){
+    await db.collection('subgrupos_despesa').doc(editId).update({nome,classificacao:selectedClass});
+    editId=null;
+  } else {
+    await db.collection('subgrupos_despesa').add({nome,grupoId:selGrupoId,classificacao:selectedClass});
+  }
+  closeModal('modal-subgrupo');loadSubgrupos();
+}
+async function delSubgrupo(id,e){
+  e.stopPropagation();if(!confirm('Excluir subgrupo?'))return;
+  await db.collection('subgrupos_despesa').doc(id).delete();selSubgrupoId=null;loadSubgrupos();
+  document.getElementById('tb-despesas').innerHTML='<tr><td colspan="5" class="empty">Selecione um subgrupo</td></tr>';
+}
+
+function openDespModal(){
+  document.getElementById('md-desc').value='';document.getElementById('md-valor').value='';
+  document.getElementById('md-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('md-status').value='pendente';openModal('modal-despesa');
+}
+async function saveDespesa(){
+  const{mes,ano}=getMesAno('desp-mes','desp-ano');
+  const ma=`${ano}-${String(mes).padStart(2,'0')}`;
+  // busca classificação do subgrupo
+  const subSnap=await db.collection('subgrupos_despesa').doc(selSubgrupoId).get();
+  const classificacao=subSnap.exists?subSnap.data().classificacao||'':'';
+  const data={descricao:document.getElementById('md-desc').value.trim(),valor:parseFloat(document.getElementById('md-valor').value)||0,data:document.getElementById('md-data').value,status:document.getElementById('md-status').value,subgrupoId:selSubgrupoId,mesAno:ma,classificacao};
+  if(!data.descricao){alert('Descrição obrigatória.');return;}
+  await db.collection('despesas').add(data);closeModal('modal-despesa');loadDespLanc();
+}
+async function delDesp(id){if(!confirm('Excluir?'))return;await db.collection('despesas').doc(id).delete();loadDespLanc();}
+
+// ── USUÁRIOS ──────────────────────────────────────────
+async function loadUsuarios(){
+  const tb=document.getElementById('tb-usuarios');
+  tb.innerHTML='<tr><td colspan="5" class="loading-row"><div class="spin"></div></td></tr>';
+  try{
+    const snap=await db.collection('usuarios').get();
+    if(snap.empty){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum usuário</td></tr>';return;}
+    tb.innerHTML='';
+    snap.forEach(doc=>{
+      const u=doc.data(),id=doc.id;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${u.email||''}</td><td>${u.nome||''}</td><td class="td-dim">${u.telefone||''}</td><td class="td-c">${u.admin?'✓':''}</td><td><button class="btn btn-sm" onclick="editUsuario('${id}')">Editar</button></td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="empty">Erro ao carregar</td></tr>';}
+}
+
+function openUsuarioModal(){
+  editId=null;document.getElementById('mu-title').textContent='Novo Usuário';
+  document.getElementById('mu-notice').style.display='none';document.getElementById('mu-pass-row').style.display='';
+  ['nome','email','pass','tel'].forEach(f=>document.getElementById('mu-'+f).value='');
+  document.getElementById('mu-admin').checked=false;openModal('modal-usuario');
+}
+async function editUsuario(id){
+  editId=id;const doc=await db.collection('usuarios').doc(id).get();const u=doc.data();
+  document.getElementById('mu-title').textContent='Editar Usuário';
+  document.getElementById('mu-notice').textContent='Para alterar a senha use o Firebase Console.';
+  document.getElementById('mu-notice').style.display='';document.getElementById('mu-pass-row').style.display='none';
+  document.getElementById('mu-nome').value=u.nome||'';document.getElementById('mu-email').value=u.email||'';
+  document.getElementById('mu-tel').value=u.telefone||'';document.getElementById('mu-admin').checked=u.admin||false;
+  openModal('modal-usuario');
+}
+async function saveUsuario(){
+  const nome=document.getElementById('mu-nome').value.trim();
+  const email=document.getElementById('mu-email').value.trim();
+  const pass=document.getElementById('mu-pass').value;
+  const tel=document.getElementById('mu-tel').value.trim();
+  const admin=document.getElementById('mu-admin').checked;
+  if(!nome||!email){alert('Nome e e-mail obrigatórios.');return;}
+  if(editId){await db.collection('usuarios').doc(editId).update({nome,email,telefone:tel,admin});closeModal('modal-usuario');loadUsuarios();return;}
+  if(!pass||pass.length<6){alert('Senha mínimo 6 caracteres.');return;}
+  try{
+    const res=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCqjRbFboQsJC45ojiaZ2-txOPORia1nKM`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,returnSecureToken:true})});
+    const data=await res.json();
+    if(data.error){alert('Erro: '+data.error.message);return;}
+    await db.collection('usuarios').doc(data.localId).set({nome,email,telefone:tel,admin});
+    closeModal('modal-usuario');loadUsuarios();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+
+// ── ASSINATURA ────────────────────────────────────────
+let assinadorUrl = 'https://assinador.saf.net.br';
+let moverArquivoAtual = null;
+let moverPastaAtual = null;
+
+async function getAssinadorUrl() {
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists && snap.data().url_servico) assinadorUrl = snap.data().url_servico;
+  } catch(e) {}
+  return assinadorUrl;
+}
+
+async function loadAssinatura() {
+  const url = await getAssinadorUrl();
+  // Status
+  const badge = document.getElementById('ass-status-badge');
+  const txt = document.getElementById('ass-status-txt');
+  try {
+    const r = await fetch(url + '/', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else throw new Error();
+  } catch(e) {
+    badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+    txt.textContent = 'Serviço Offline';
+  }
+  // Pastas
+  loadPasta('assinar');
+  loadPasta('assinados');
+  loadPasta('originais');
+  loadPasta('erros');
+}
+
+async function loadPasta(pasta) {
+  const url = await getAssinadorUrl();
+  const el = document.getElementById('pasta-' + pasta + '-list');
+  el.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(url + '/pasta/' + pasta);
+    const d = await r.json();
+    const arquivos = d.arquivos || [];
+    if (!arquivos.length) { el.innerHTML = '<div class="empty">Nenhum arquivo</div>'; return; }
+    el.innerHTML = '';
+    arquivos.forEach(nome => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      const nomeEl = document.createElement('span');
+      nomeEl.textContent = nome;
+      nomeEl.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px';
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:4px;flex-shrink:0';
+      // Baixar (assinados e originais e erros)
+      if (['assinados','originais','erros'].includes(pasta)) {
+        const btnDl = document.createElement('a');
+        btnDl.href = url + '/assinados-dl/' + pasta + '/' + encodeURIComponent(nome);
+        btnDl.download = nome;
+        btnDl.className = 'btn btn-sm';
+        btnDl.textContent = 'Baixar';
+        btnDl.onclick = async (e) => {
+          e.preventDefault();
+          const u = await getAssinadorUrl();
+          window.open(u + '/download/' + pasta + '/' + encodeURIComponent(nome));
+        };
+        btns.appendChild(btnDl);
+      }
+      // Reenviar (erros)
+      if (pasta === 'erros') {
+        const btnRe = document.createElement('button');
+        btnRe.className = 'btn btn-sm';
+        btnRe.textContent = 'Reenviar';
+        btnRe.onclick = () => moverArquivo(pasta, nome, 'assinar');
+        btns.appendChild(btnRe);
+      }
+      // Remover (assinar)
+      if (pasta === 'assinar') {
+        const btnRm = document.createElement('button');
+        btnRm.className = 'btn btn-sm btn-danger';
+        btnRm.textContent = 'Remover';
+        btnRm.onclick = () => removerArquivo(pasta, nome);
+        btns.appendChild(btnRm);
+      }
+      // Mover para
+      const btnMv = document.createElement('button');
+      btnMv.className = 'btn btn-sm';
+      btnMv.textContent = 'Mover';
+      btnMv.onclick = () => abrirModalMover(pasta, nome);
+      btns.appendChild(btnMv);
+
+      div.appendChild(nomeEl);
+      div.appendChild(btns);
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Erro ao carregar</div>';
+  }
+}
+
+function abrirModalMover(pasta, nome) {
+  moverArquivoAtual = nome;
+  moverPastaAtual = pasta;
+  document.getElementById('mover-nome-txt').textContent = nome;
+  // Remove pasta atual das opções
+  Array.from(document.getElementById('mover-destino').options).forEach(o => {
+    o.disabled = o.value === pasta;
+  });
+  document.getElementById('modal-mover-bg').style.display = 'flex';
+}
+
+async function confirmarMover() {
+  const destino = document.getElementById('mover-destino').value;
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/mover', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({pasta_origem: moverPastaAtual, pasta_destino: destino, arquivo: moverArquivoAtual})
+    });
+    if (r.ok) {
+      document.getElementById('modal-mover-bg').style.display = 'none';
+      loadPasta(moverPastaAtual);
+      loadPasta(destino);
+    } else alert('Erro ao mover arquivo.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function removerArquivo(pasta, nome) {
+  if (!confirm('Remover ' + nome + '?')) return;
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/arquivo/' + pasta + '/' + encodeURIComponent(nome), {method:'DELETE'});
+    if (r.ok) loadPasta(pasta);
+    else alert('Erro ao remover.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function moverArquivo(pastaOrigem, nome, pastaDestino) {
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/mover', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({pasta_origem: pastaOrigem, pasta_destino: pastaDestino, arquivo: nome})
+    });
+    if (r.ok) { loadPasta(pastaOrigem); loadPasta(pastaDestino); }
+    else alert('Erro ao mover.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function uploadPDFs(files) {
+  const url = await getAssinadorUrl();
+  const msg = document.getElementById('ass-upload-msg');
+  msg.textContent = 'Enviando...';
+  let ok = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(url + '/upload', {method:'POST', body: fd});
+      if (r.ok) ok++;
+    } catch(e) {}
+  }
+  msg.textContent = ok + ' arquivo(s) enviado(s).';
+  setTimeout(() => msg.textContent = '', 3000);
+  loadPasta('assinar');
+}
+
+async function processarAgora() {
+  const url = await getAssinadorUrl();
+  try {
+    const r = await fetch(url + '/processar-agora', {method:'POST'});
+    if (r.ok) {
+      alert('Processamento iniciado.');
+      setTimeout(() => loadAssinatura(), 3000);
     }
-  }catch(e){console.error('syncClientes erro:',e);}
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+// ── CERTIDÕES ─────────────────────────────────────────
+let certidoesUrl = 'https://certidoes.saf.net.br';
+
+async function getCertidoesUrl() {
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists && snap.data().url_certidoes) certidoesUrl = snap.data().url_certidoes;
+  } catch(e) {}
+  return certidoesUrl;
+}
+
+async function loadCertidoes() {
+  const url = await getCertidoesUrl();
+  const badge = document.getElementById('cert-status-badge');
+  const txt = document.getElementById('cert-status-txt');
+  try {
+    const r = await fetch(url + '/', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else throw new Error();
+  } catch(e) {
+    badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+    txt.textContent = 'Serviço Offline';
+  }
+  loadClientesCertidoes();
+  preencherSelectClientes();
+}
+
+async function preencherSelectClientes() {
+  const sel = document.getElementById('cert-cli-sel');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  try {
+    const snap = await db.collection('clientes').orderBy('nome').get();
+    snap.forEach(doc => {
+      const d = doc.data();
+      const opt = document.createElement('option');
+      opt.value = d.cnpj || '';
+      opt.textContent = d.nome || '';
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadClientesCertidoes() {
+  const url = await getCertidoesUrl();
+  const el = document.getElementById('cert-clientes-list');
+  el.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  try {
+    const r = await fetch(url + '/certidoes/todos/clientes');
+    const d = await r.json();
+    const clientes = d.clientes || [];
+    if (!clientes.length) { el.innerHTML = '<div class="empty">Nenhuma certidão encontrada</div>'; return; }
+    el.innerHTML = '';
+    clientes.forEach(c => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      div.innerHTML = `
+        <div style="flex:1">
+          <span style="font-weight:600">${c.cliente}</span>
+          <span style="color:#000;margin-left:10px">${c.total} arquivo(s)</span>
+          <span style="color:#555;margin-left:8px;font-size:11px">Último: ${c.ultimo}</span>
+        </div>
+        <button class="btn btn-sm" onclick="verArquivosCertidoes('${encodeURIComponent(c.cnpj)}','${encodeURIComponent(c.cliente)}')">Ver arquivos</button>`;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Erro ao carregar — serviço offline?</div>';
+  }
+}
+
+async function verArquivosCertidoes(cnpjEnc, clienteEnc) {
+  const cnpj = decodeURIComponent(cnpjEnc);
+  const cliente = decodeURIComponent(clienteEnc);
+  const url = await getCertidoesUrl();
+  const panel = document.getElementById('cert-arquivos-panel');
+  const list = document.getElementById('cert-arquivos-list');
+  document.getElementById('cert-arq-titulo').textContent = cliente;
+  panel.style.display = '';
+  list.innerHTML = '<div class="loading-row"><div class="spin"></div></div>';
+  panel.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const r = await fetch(url + '/certidoes/' + encodeURIComponent(cnpj));
+    const d = await r.json();
+    const arquivos = d.arquivos || [];
+    if (!arquivos.length) { list.innerHTML = '<div class="empty">Nenhum arquivo</div>'; return; }
+    list.innerHTML = '';
+    arquivos.forEach(nome => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-bottom:1px solid #bfdbfe;font-size:12px';
+      div.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${nome}</span>
+        <button class="btn btn-sm" onclick="downloadCertidao('${encodeURIComponent(cnpj)}','${encodeURIComponent(nome)}')">Baixar</button>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Erro ao carregar arquivos</div>';
+  }
+}
+
+async function downloadCertidao(cnpjEnc, arquivoEnc) {
+  const url = await getCertidoesUrl();
+  window.open(url + '/download/certidao/' + cnpjEnc + '/' + arquivoEnc);
+}
+
+async function uploadCertidoes(files) {
+  const url = await getCertidoesUrl();
+  const msg = document.getElementById('cert-upload-msg');
+  msg.style.color = 'var(--blue)';
+  msg.textContent = 'Enviando...';
+  let ok = 0, aviso = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await fetch(url + '/certidoes/upload', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.status === 'ok') ok++;
+      else aviso++;
+    } catch(e) { aviso++; }
+  }
+  msg.style.color = aviso ? 'var(--amber)' : 'var(--green)';
+  msg.textContent = `${ok} enviado(s)` + (aviso ? `, ${aviso} com aviso (CNPJ não identificado ou cliente não cadastrado)` : '');
+  setTimeout(() => msg.textContent = '', 5000);
+  loadClientesCertidoes();
+}
+
+async function consultarCNDCliente() {
+  const cnpj = document.getElementById('cert-cli-sel').value;
+  if (!cnpj) { alert('Selecione um cliente.'); return; }
+  const url = await getCertidoesUrl();
+  const msgEl = document.getElementById('cert-cnd-msg');
+  msgEl.style.display = '';
+  msgEl.style.color = 'var(--blue)';
+  msgEl.textContent = 'Consultando CND na Receita Federal...';
+  try {
+    const r = await fetch(url + '/cnd/consultar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cnpj, enviar: true })
+    });
+    const d = await r.json();
+    if (d.arquivo) {
+      msgEl.style.color = 'var(--green)';
+      msgEl.textContent = `✓ CND emitida para ${d.cliente} — válida até ${d.data_validade || '—'}. E-mail e WhatsApp enviados.`;
+    } else {
+      msgEl.style.color = 'var(--amber)';
+      msgEl.textContent = `Status ${d.status}: ${d.mensagem || 'Sem resposta da Receita.'}`;
+    }
+    loadClientesCertidoes();
+  } catch(e) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Erro: ' + e.message;
+  }
+}
+
+async function consultarTodosCND() {
+  if (!confirm('Consultar CND de todos os clientes e enviar por e-mail e WhatsApp?')) return;
+  const url = await getCertidoesUrl();
+  try {
+    const r = await fetch(url + '/cnd/consultar-todos', { method: 'POST' });
+    const d = await r.json();
+    alert('Consulta iniciada em background. Acompanhe os logs do servidor.');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// ── SICALC / DARF ───────────────────────────────────────
+async function getSicalcUrl() {
+  const fallback = 'https://sicalc.saf.net.br';
+  try {
+    const snap = await db.collection('config_assinador').doc('principal').get();
+    if (snap.exists) {
+      const u = (snap.data().url_sicalc || '').trim().replace(/\/$/, '');
+      if (u) return u;
+    }
+  } catch(e) {}
+  return fallback;
+}
+
+async function loadSicalc() {
+  const url = (await getSicalcUrl() || '').replace(/\/$/, '');
+  const badge = document.getElementById('sicalc-status-badge');
+  const txt = document.getElementById('sicalc-status-txt');
+  if (!badge || !txt) return;
+  const rootUrl = url + '/';
+  const isNetErr = (err) =>
+    err && (err.name === 'TypeError' || /fetch|Network|Failed|Load|aborted|AbortError/i.test(String(err.message || err)));
+  try {
+    const r = await fetch(rootUrl, { signal: AbortSignal.timeout(8000), mode: 'cors' });
+    if (r.ok) {
+      badge.style.background = '#dcfce7'; badge.style.color = '#166534';
+      txt.textContent = 'Serviço Online';
+    } else {
+      badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+      txt.textContent = 'Serviço Offline';
+    }
+  } catch(e) {
+    if (isNetErr(e)) {
+      badge.style.background = '#fef3c7'; badge.style.color = '#92400e';
+      txt.textContent = 'URL não alcançável daqui';
+    } else {
+      badge.style.background = '#fee2e2'; badge.style.color = '#991b1b';
+      txt.textContent = 'Serviço Offline';
+    }
+  }
 }
 
 async function uploadSicalcDarf(files) {
